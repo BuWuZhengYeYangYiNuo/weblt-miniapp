@@ -35,10 +35,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 18
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 24
 
       - name: Install dependencies & toolchain
         run: |
@@ -51,7 +51,7 @@ jobs:
           tar -xf "${{ matrix.versioninfo_filename }}" -C ./jsapi
 
       - name: Build
-        run: ./tools/build.sh -a
+        run: bash ./tools/build.sh -a
 
       - name: Upload AMR artifacts
         uses: actions/upload-artifact@v4

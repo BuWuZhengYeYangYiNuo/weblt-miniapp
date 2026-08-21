@@ -2,7 +2,6 @@
  * 模拟器预览小程序
  */
 const webpack = require('webpack')
-const WebpackDevServer = require('webpack-dev-server')
 
 const info = require('../libs/appinfo');
 const helper = require('../libs/helper');
@@ -41,6 +40,7 @@ module.exports.webPreview = async function () {
   const config = await webPackConf.dev();
   const port = await helper.findPort();
 
+  const WebpackDevServer = require('webpack-dev-server')
   const server = new WebpackDevServer(webpack(config), config.devServer);
   server.listen(port, '0.0.0.0', (err) => {
     if (err) {

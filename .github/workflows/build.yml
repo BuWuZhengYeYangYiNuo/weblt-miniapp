@@ -51,7 +51,9 @@ jobs:
           tar -xf "${{ matrix.versioninfo_filename }}" -C ./jsapi
 
       - name: Build
-        run: bash ./tools/build.sh -a
+        run: |
+          chmod +x ./aiot-vue-cli/cli-libs/aiot-qjsc-tool/assets/bin/linux/qjsc20200705
+          bash ./tools/build.sh -a
 
       - name: Upload AMR artifacts
         uses: actions/upload-artifact@v4

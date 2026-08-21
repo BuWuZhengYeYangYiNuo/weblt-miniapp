@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies & toolchain
         run: |
           npm install -g pnpm@latest-10
-          pnpm install --verbose -C ./ui
+          pnpm install --verbose --no-frozen-lockfile -C ./ui
           mkdir -p ./jsapi/toolchains
           wget -q "${{ matrix.toolchain_url }}" -O "./jsapi/toolchains/${{ matrix.toolchain_filename }}"
           tar -xjf "./jsapi/toolchains/${{ matrix.toolchain_filename }}" -C ./jsapi/toolchains

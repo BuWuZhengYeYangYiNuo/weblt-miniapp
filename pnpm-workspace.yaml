@@ -5,3 +5,6 @@ packages:
 onlyBuiltDependencies:
   - es5-ext
   - uglifyjs-webpack-plugin
+
+overrides:
+  tslib: ^2.8.0

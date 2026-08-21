@@ -1,0 +1,537 @@
+.chat-page {
+  width: 640px;
+  height: 260px;
+  background-color: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+}
+
+// 顶部栏
+.chat-topbar {
+  height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #16213e;
+  padding: 0 8px;
+}
+
+.chat-user {
+  width: 120px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.chat-username {
+  font-size: 14px;
+  color: #e0e0e0;
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+.chat-uid {
+  font-size: 12px;
+  color: #8899aa;
+}
+
+.chat-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.chat-tab {
+  padding: 0 12px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-tab-active {
+  background-color: #1a3a5e;
+}
+
+.chat-tab-text {
+  font-size: 14px;
+  color: #8899aa;
+}
+
+.chat-actions {
+  width: 180px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.chat-points {
+  font-size: 12px;
+  color: #f59e0b;
+  margin-right: 8px;
+}
+
+.chat-checkin {
+  width: 36px;
+  height: 20px;
+  background-color: #10b981;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.chat-checkin-text {
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.chat-logout {
+  width: 36px;
+  height: 20px;
+  background-color: #ef4444;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-logout-text {
+  font-size: 12px;
+  color: #ffffff;
+}
+
+// 公告
+.chat-announce {
+  height: 20px;
+  background-color: #2a1a1a;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  overflow: hidden;
+}
+
+.chat-announce-text {
+  font-size: 12px;
+  color: #ef4444;
+  white-space: nowrap;
+}
+
+// 内容区
+.chat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+// 侧边栏
+.chat-sidebar {
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  background-color: #0d1b2a;
+  border-right-width: 1px;
+  border-right-color: #2a3a5e;
+}
+
+.sidebar-search {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #16213e;
+}
+
+.sidebar-search-text {
+  font-size: 12px;
+  color: #3b82f6;
+}
+
+.sidebar-scroller {
+  width: 100px;
+}
+
+.sidebar-item {
+  height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 8px;
+  background-color: #0d1b2a;
+}
+
+.sidebar-item-active {
+  background-color: #1a3a5e;
+}
+
+.sidebar-name {
+  font-size: 13px;
+  color: #e0e0e0;
+  flex: 1;
+}
+
+.sidebar-sub {
+  font-size: 11px;
+  color: #8899aa;
+}
+
+.sidebar-req {
+  height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 4px;
+  background-color: #1a2a1a;
+}
+
+.sidebar-req-name {
+  font-size: 12px;
+  color: #e0e0e0;
+  flex: 1;
+}
+
+.sidebar-req-btns {
+  display: flex;
+  flex-direction: row;
+}
+
+.sidebar-req-accept {
+  width: 20px;
+  height: 20px;
+  background-color: #10b981;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 2px;
+}
+
+.sidebar-req-reject {
+  width: 20px;
+  height: 20px;
+  background-color: #ef4444;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-req-btn-text {
+  font-size: 11px;
+  color: #ffffff;
+}
+
+.sidebar-empty {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-empty-text {
+  font-size: 12px;
+  color: #556677;
+}
+
+// 主内容区
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-placeholder {
+  font-size: 14px;
+  color: #556677;
+  text-align: center;
+  margin-top: 80px;
+}
+
+// 消息列表
+.msg-scroller {
+  width: 540px;
+}
+
+.msg-scroller-public {
+  width: 640px;
+}
+
+.msg-list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+
+.msg-item {
+  margin-bottom: 4px;
+  padding: 4px;
+  background-color: #16213e;
+  border-radius: 4px;
+}
+
+.msg-sender {
+  font-size: 13px;
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.msg-time {
+  font-size: 11px;
+  color: #556677;
+}
+
+.msg-empty {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.msg-empty-text {
+  font-size: 14px;
+  color: #556677;
+}
+
+// 输入栏
+.chat-input-bar {
+  height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 4px;
+  background-color: #0d1b2a;
+}
+
+.chat-input-bar-kb {
+  height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 4px;
+  background-color: #0d1b2a;
+}
+
+.chat-input-field {
+  flex: 1;
+  height: 24px;
+  background-color: #0f3460;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  margin-right: 4px;
+}
+
+.chat-input-text {
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.chat-input-placeholder {
+  font-size: 14px;
+  color: #556677;
+}
+
+.chat-send-btn {
+  width: 50px;
+  height: 24px;
+  background-color: #3b82f6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-send-text {
+  font-size: 13px;
+  color: #ffffff;
+}
+
+// 键盘区
+.chat-keyboard-area {
+  display: flex;
+  flex-direction: column;
+}
+
+// 弹窗模式键盘
+.chat-popup-keyboard {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 640px;
+  z-index: 102;
+}
+
+// 弹窗
+.chat-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 104;
+}
+
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 260px;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.popup-box {
+  width: 300px;
+  height: 140px;
+  background-color: #16213e;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  z-index: 103;
+}
+
+.popup-title {
+  font-size: 16px;
+  color: #e0e0e0;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.popup-input {
+  height: 28px;
+  background-color: #0f3460;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.popup-input-value {
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.popup-input-placeholder {
+  font-size: 14px;
+  color: #556677;
+}
+
+.popup-info {
+  font-size: 14px;
+  color: #e0e0e0;
+  text-align: center;
+}
+
+.popup-btns {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.popup-cancel {
+  width: 130px;
+  height: 28px;
+  background-color: #2a3a5e;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-btn-text {
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.popup-confirm {
+  width: 130px;
+  height: 28px;
+  background-color: #3b82f6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-confirm-text {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+// 群操作按钮（创建/加入）
+.group-actions {
+  display: flex;
+  flex-direction: row;
+}
+
+.group-action {
+  flex: 1;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #16213e;
+}
+
+// 群聊头部
+.group-header {
+  height: 24px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 8px;
+  background-color: #16213e;
+  flex-shrink: 0;
+}
+
+.group-header-name {
+  font-size: 14px;
+  color: #e0e0e0;
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.group-header-code {
+  font-size: 12px;
+  color: #8899aa;
+  flex: 1;
+}
+
+.group-header-btn {
+  height: 20px;
+  padding: 0 10px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group-btn-leave {
+  background-color: #ef4444;
+}
+
+.group-btn-disband {
+  background-color: #b91c1c;
+}
+
+.group-btn-text {
+  font-size: 12px;
+  color: #ffffff;
+}
+
+// 管理员消息发送者标识
+.msg-sender-admin {
+  color: #f59e0b;
+}

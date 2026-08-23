@@ -172,33 +172,9 @@
       </div>
     </div>
 
-    <!-- 键盘+输入栏 -->
-    <div class="chat-keyboard-area" v-if="keyboardVisible && !showSearch && !showCreate && !showJoin && !searchResult">
-      <div class="chat-input-bar-kb">
-        <div class="chat-input-field" @click="keyboardVisible = false">
-          <text class="chat-input-text" v-if="messageInput">{{ messageInput }}</text>
-          <text class="chat-input-placeholder" v-else>输入消息...</text>
-        </div>
-        <div class="chat-send-btn" @click="sendMessage">
-          <text class="chat-send-text">发送</text>
-        </div>
-      </div>
-      <Keyboard
-        @input="onKbInput"
-        @back="onKbBack"
-        @enter="onKbEnter"
-        @height="onKbHeight"
-      />
-    </div>
-
-    <!-- 弹窗模式下的键盘 -->
-    <div class="chat-popup-keyboard" v-if="keyboardVisible && (showSearch || showCreate || showJoin)">
-      <Keyboard
-        @input="onKbInput"
-        @back="onKbBack"
-        @enter="onKbEnter"
-        @height="onKbHeight"
-      />
+    <!-- 系统输入法拉起中（全屏覆盖，本 app 退后台，无需自绘键盘让位） -->
+    <div class="chat-input-bar chat-input-busy" v-if="keyboardVisible">
+      <text class="chat-input-placeholder">系统输入法中…（完成后自动返回）</text>
     </div>
 
     <!-- 群创建结果/好友搜索结果弹窗 -->

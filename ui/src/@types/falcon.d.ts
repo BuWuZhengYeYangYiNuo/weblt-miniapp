@@ -31,6 +31,14 @@ type Falcon = {
             showToast(params: { message: string }): void;
             showLoading(params?: { message?: string }): void;
             hideLoading(): void;
+        },
+        systemIME: {
+            // 拉起系统自带输入法（有道输入法）软键盘。hint 为输入框提示。
+            open(params?: { hint?: string }): Promise<boolean>;
+            // 关闭系统输入法软键盘（通常由输入法自身返回触发）。
+            close(): Promise<boolean>;
+            // 当前系统输入法是否处于前台。
+            isOpen(): Promise<boolean>;
         }
     },
     closeApp: () => void,

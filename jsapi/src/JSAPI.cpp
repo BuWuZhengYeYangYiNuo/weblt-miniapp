@@ -25,6 +25,7 @@
 #include "AI/JSAI.hpp"
 #include "IME/JSIME.hpp"
 #include "ScanInput/JSScanInput.hpp"
+#include "SystemIME/SystemIME.hpp"
 
 using namespace JQUTIL_NS;
 
@@ -33,6 +34,7 @@ static std::vector<std::string> exportList = {
     // "AI",
     // "IME",
     // "ScanInput",
+    "SystemIME",
 };
 
 static int module_init(JSContext *ctx, JSModuleDef *m)
@@ -42,6 +44,7 @@ static int module_init(JSContext *ctx, JSModuleDef *m)
     // env->setModuleExport("AI", createAI(env.get()));
     // env->setModuleExport("IME", createIME(env.get()));
     // env->setModuleExport("ScanInput", createScanInput(env.get()));
+    env->setModuleExport("SystemIME", createSystemIME(env.get()));
 
     // Add your own module exports here, e.g.:
     // env->setModuleExport("MyModule", createMyModule(env.get()));

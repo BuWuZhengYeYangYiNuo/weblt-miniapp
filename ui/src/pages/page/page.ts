@@ -1,11 +1,11 @@
 import { defineComponent } from 'vue'
-import Keyboard from '../../components/Keyboard.vue'
 import MessageItem from '../../components/MessageItem.vue'
 import { api, showToast } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
+import { openIME, onIMEInput, onIMEState, offIMEInput, offIMEState } from '../../lib/systemIme'
 
 export default defineComponent({
-  components: { Keyboard, MessageItem },
+  components: { MessageItem },
 
   data() {
     return {
@@ -43,9 +43,6 @@ export default defineComponent({
       searchResult: null as any,
       kbTarget: 'message' as 'message' | 'popup',
 
-      // 键盘实际高度（由键盘组件 height 事件动态更新，中文模式更高）
-      keyboardHeight: 96,
-
       // 轮询
       pollTimer: 0 as any,
     }
@@ -53,9 +50,9 @@ export default defineComponent({
 
   computed: {
     contentHeight(): number {
+      // 系统输入法为全屏覆盖，拉起时本 app 退到后台，无需为键盘让出内容高度。
       let h = 260 - 28 - 28
       if (this.announcement) h -= 20
-      if (this.keyboardVisible) h -= this.keyboardHeight
       return h
     },
     sidebarHeight(): number {
@@ -81,6 +78,9 @@ export default defineComponent({
     await initAuth()
     this.userInfo = getUser() || this.userInfo
     this.checkinPoints = this.userInfo.points || 0
+
+    onIMEInput(this.handleIMEInput)
+    onIMEState(this.handleIMEState)
 
     try {
       const me = await api.getMe()
@@ -108,6 +108,8 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
+    offIMEInput(this.handleIMEInput)
+    offIMEState(this.handleIMEState)
   },
 
   onUnload() {
@@ -115,6 +117,8 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
+    offIMEInput(this.handleIMEInput)
+    offIMEState(this.handleIMEState)
   },
 
   methods: {
@@ -294,11 +298,13 @@ export default defineComponent({
     focusPopupInput() {
       this.kbTarget = 'popup'
       this.keyboardVisible = true
+      openIME(this.popupPlaceholder)
     },
 
     focusMessageInput() {
       this.kbTarget = 'message'
       this.keyboardVisible = true
+      openIME('输入消息')
     },
 
     async confirmPopup() {
@@ -374,34 +380,20 @@ export default defineComponent({
       }
     },
 
-    // 键盘
-    onKbInput(char: string) {
+    // 系统输入法回传文字：按当前聚焦目标回填
+    handleIMEInput(text: string) {
       if (this.kbTarget === 'popup') {
-        this.popupInput += char
+        this.popupInput += text
       } else {
-        this.messageInput += char
+        this.messageInput += text
       }
     },
 
-    onKbBack() {
-      if (this.kbTarget === 'popup') {
-        this.popupInput = this.popupInput.slice(0, -1)
-      } else {
-        this.messageInput = this.messageInput.slice(0, -1)
-      }
-    },
-
-    onKbEnter() {
-      if (this.kbTarget === 'popup') {
-        this.confirmPopup()
-      } else {
-        this.sendMessage()
-      }
-    },
-
-    onKbHeight(h: number) {
-      if (typeof h === 'number' && h > 0) {
-        this.keyboardHeight = h
+    // 系统输入法前台/后台状态变化
+    handleIMEState(open: boolean) {
+      if (!open) {
+        // 输入法退到后台，本 app 回到前台
+        this.keyboardVisible = false
       }
     },
 

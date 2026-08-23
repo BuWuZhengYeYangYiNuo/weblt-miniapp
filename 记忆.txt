@@ -81,3 +81,41 @@
 - .less 扫描：无多类名选择器、无多值 border-radius、无 `:hover` ✅
 - action 分支完整（含新增 to123）✅
 - 横向 scroller 固定宽高符合规范 ✅
+
+## 2026-08-23 改用系统输入法（有道输入法）取代自绘键盘
+
+### 背景
+真机（有道词典笔）自带系统输入法「有道输入法」，appid `8001666679481944`，以 softKeyboard 服务形式存在。
+自绘键盘在 260px 小屏上反复出现溢出/裁切/按钮点不到等问题（用户反馈「完全用不了」）。
+项目自带自研 `IME`（C++ 拼音引擎）在 `JSAPI.cpp` 中被注释、且需 rawdict 生成，未启用。
+`ScanInput.cpp` 已验证机制：`system("miniapp_cli start <appid> softKeyboard")` 可拉起软键盘。
+
+### 方案
+放弃自绘键盘，改调系统输入法。新增原生 `SystemIME` 模块 + 前端封装，复用 ScanInput 的 `miniapp_cli` 拉起机制。
+
+### 新增 / 修改
+- **新增 `jsapi/src/SystemIME/SystemIME.hpp/.cpp`**：注册 `SystemIME` native 模块，提供 `open(hint)` / `close()` / `isOpen()`。
+  `open` 调 `system("miniapp_cli start 8001666679481944 softKeyboard")` 拉起系统输入法；
+  拉起/关闭通过 `publish("system_ime_state", {open})` 通知前端。`close` 不主动 miniapp_cli close（仅验证过 install/start 子命令，系统输入法完成即自退）。
+- **`jsapi/src/JSAPI.cpp`**：`exportList` 加 `"SystemIME"`，`module_init` 加 `env->setModuleExport("SystemIME", createSystemIME(...))`。
+  （`src/*.cpp` 由 CMake `GLOB_RECURSE` 自动编入，无需改 CMake。）
+- **`ui/src/@types/falcon.d.ts`**：`jsapi` 下加 `systemIME: { open, close, isOpen }` 类型。
+- **新增 `ui/src/lib/systemIme.ts`**：前端封装 `openIME(hint)` / `closeIME()`，以及 `onIMEInput(cb)` / `onIMEState(cb)` 监听。
+  监听事件：`system_ime_input`（假设回传通道，data.text）与 `system_ime_state`（data.open）。
+- **`ui/src/pages/index/index.ts` + `index.vue`**：点输入框 → `openIME(hint)` 拉起系统输入法；移除自绘 `<Keyboard>` 渲染。
+  监听回传按 `activeField` 回填；`system_ime_state open:false` 时清聚焦。
+- **`ui/src/pages/page/page.ts` + `page.vue`**：`focusMessageInput/focusPopupInput` → `openIME()`；移除自绘 `<Keyboard>`（两处）。
+  `keyboardVisible` 语义改为「系统输入法拉起中」，不再为内容区让高度（系统键盘全屏覆盖时本 app 退后台）。
+  `contentHeight` 不再减键盘高度；移除 `keyboardHeight` data 与 `Keyboard` 组件引用。
+  `page.less` 新增 `.chat-input-busy` 提示态。
+
+### 关键不确定点（需真机验证）
+1. **系统输入法回传通道未知**：假设走 `publish("system_ime_input", {text})`。若真机收不到文字，说明它走别的通道
+   （如写数据库 / storage）。届时需据真机现象再接（例如轮询 storage key 或复用 ScanInput 的 history.db 轮询）。
+2. **`miniapp_cli start 8001666679481944 softKeyboard` 是否真能拉起**：ScanInput 用同样机制拉起过软键盘，但 appid 不同。
+   若拉不起，可能系统输入法服务名/启动方式不同，需真机确认。
+
+### 自检
+- 前端：`Keyboard` 组件文件保留（潜在 fallback），页面已不再渲染，无编译引用残留（index/page 的 components 已移除 Keyboard）。
+- native：SystemIME.cpp 符合 JQPublishObject 用法，与 ScanInput/JSAI 同构；CMake GLOB 自动包含。
+- 类型：falcon.d.ts 已声明 systemIME；systemIme.ts 调用路径一致。

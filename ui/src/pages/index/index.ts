@@ -1,11 +1,9 @@
 import { defineComponent } from 'vue'
-import Keyboard from '../../components/Keyboard.vue'
 import { api } from '../../lib/api'
 import { saveAuth, initAuth } from '../../lib/store'
+import { openIME, onIMEInput, onIMEState, offIMEInput, offIMEState } from '../../lib/systemIme'
 
 export default defineComponent({
-  components: { Keyboard },
-
   data() {
     return {
       isRegister: false,
@@ -29,15 +27,50 @@ export default defineComponent({
   // 页面生命周期：进入前台时由 BasePage 统一调度，必须定义在选项顶层
   async onShow() {
     await initAuth()
+    onIMEInput(this.handleIMEInput)
+    onIMEState(this.handleIMEState)
     try {
       await api.getMe()
       $falcon.navTo('page', {})
     } catch {}
   },
 
+  onHide() {
+    offIMEInput(this.handleIMEInput)
+    offIMEState(this.handleIMEState)
+  },
+
+  onUnload() {
+    offIMEInput(this.handleIMEInput)
+    offIMEState(this.handleIMEState)
+  },
+
   methods: {
+    // 系统输入法回传文字：按当前聚焦字段回填
+    handleIMEInput(text: string) {
+      if (!this.activeField) return
+      if (this.activeField === 'username') this.username += text
+      else if (this.activeField === 'password') this.password += text
+      else if (this.activeField === 'email') this.email += text
+      else if (this.activeField === 'code') this.code += text
+    },
+
+    // 系统输入法前台/后台状态变化
+    handleIMEState(open: boolean) {
+      // 输入法退到后台时，清空聚焦（自绘键盘也一并隐藏）
+      if (!open) this.activeField = ''
+    },
+
     focusField(field: string) {
       this.activeField = field
+      const hintMap: Record<string, string> = {
+        username: '输入用户名',
+        password: '输入密码',
+        email: '输入邮箱',
+        code: '输入验证码',
+      }
+      // 主路径：拉起系统输入法（有道输入法）
+      openIME(hintMap[field] || '')
     },
 
     onInput(char: string) {

@@ -46,13 +46,8 @@
       </div>
     </div>
 
-    <div class="login-kb-wrap" v-if="activeField">
-      <Keyboard
-        @input="onInput"
-        @back="onBack"
-        @enter="onEnter"
-      />
-    </div>
+    <!-- 输入框聚焦时拉起系统输入法（有道输入法），不再使用自绘键盘，
+         避免小屏(260px)自绘键盘溢出/裁切问题。 -->
   </div>
 </template>
 

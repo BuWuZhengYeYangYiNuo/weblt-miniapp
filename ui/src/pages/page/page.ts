@@ -43,6 +43,9 @@ export default defineComponent({
       searchResult: null as any,
       kbTarget: 'message' as 'message' | 'popup',
 
+      // 键盘实际高度（由键盘组件 height 事件动态更新，中文模式更高）
+      keyboardHeight: 96,
+
       // 轮询
       pollTimer: 0 as any,
     }
@@ -52,7 +55,7 @@ export default defineComponent({
     contentHeight(): number {
       let h = 260 - 28 - 28
       if (this.announcement) h -= 20
-      if (this.keyboardVisible) h -= 84
+      if (this.keyboardVisible) h -= this.keyboardHeight
       return h
     },
     sidebarHeight(): number {
@@ -73,6 +76,7 @@ export default defineComponent({
     },
   },
 
+  // 页面生命周期：进入前台时由 BasePage 统一调度，必须定义在选项顶层
   async onShow() {
     await initAuth()
     this.userInfo = getUser() || this.userInfo
@@ -101,14 +105,14 @@ export default defineComponent({
 
   onHide() {
     if (this.pollTimer) {
-      clearInterval(this.pollTimer)
+      this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
   },
 
   onUnload() {
     if (this.pollTimer) {
-      clearInterval(this.pollTimer)
+      this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
   },
@@ -392,6 +396,12 @@ export default defineComponent({
         this.confirmPopup()
       } else {
         this.sendMessage()
+      }
+    },
+
+    onKbHeight(h: number) {
+      if (typeof h === 'number' && h > 0) {
+        this.keyboardHeight = h
       }
     },
 

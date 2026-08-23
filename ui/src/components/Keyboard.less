@@ -1,6 +1,5 @@
 .kb-container {
   width: 640px;
-  height: 84px;
   background-color: #0d1b2a;
   display: flex;
   flex-direction: column;
@@ -9,18 +8,68 @@
 .kb-row {
   display: flex;
   flex-direction: row;
-  height: 28px;
+  height: 32px;
 }
 
 .kb-key {
   flex: 1;
-  height: 28px;
+  height: 32px;
   background-color: #16213e;
   border-radius: 3px;
   margin: 1px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+// 中文候选栏
+.kb-candidate-bar {
+  height: 32px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #16213e;
+  padding: 0 4px;
+}
+
+.kb-pinyin {
+  font-size: 14px;
+  color: #3b82f6;
+  margin-right: 8px;
+  min-width: 40px;
+}
+
+.kb-candidates {
+  flex: 1;
+  height: 32px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.kb-candidate {
+  height: 28px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f3460;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+.kb-candidate-text {
+  font-size: 16px;
+  color: #e0e0e0;
+}
+
+// 9 键数字键
+.kb-key-t9 {
+  flex: 1;
+  height: 32px;
+  background-color: #16213e;
+  border-radius: 3px;
+  margin: 1px;
 }
 
 .kb-key:active {

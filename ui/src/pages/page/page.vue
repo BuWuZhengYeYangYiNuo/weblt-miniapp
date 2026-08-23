@@ -187,6 +187,7 @@
         @input="onKbInput"
         @back="onKbBack"
         @enter="onKbEnter"
+        @height="onKbHeight"
       />
     </div>
 
@@ -196,6 +197,7 @@
         @input="onKbInput"
         @back="onKbBack"
         @enter="onKbEnter"
+        @height="onKbHeight"
       />
     </div>
 

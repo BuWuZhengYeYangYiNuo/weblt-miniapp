@@ -46,12 +46,13 @@
       </div>
     </div>
 
-    <Keyboard
-      v-if="activeField"
-      @input="onInput"
-      @back="onBack"
-      @enter="onEnter"
-    />
+    <div class="login-kb-wrap" v-if="activeField">
+      <Keyboard
+        @input="onInput"
+        @back="onBack"
+        @enter="onEnter"
+      />
+    </div>
   </div>
 </template>
 

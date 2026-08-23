@@ -1,0 +1,83 @@
+# 记忆.txt — miniapp-template 维护记录
+
+> 设备：有道词典笔。屏幕物理 260×640，默认旋转 270°，故布局按 **640(宽) × 260(高)** 编写。
+> 框架：基于 Vue 2.6/3 + HaaS UI（Weex 渲染），私有 JSAPI 实现（与知识.txt里阿里云公开文档接口名不同，以项目 falcon.d.ts 为准）。
+> 编译：不本地编译，由 GitHub Actions 在 push 到 main 后构建 .amr。
+
+## 2026-08-23 修复：无法打开键盘 + 无法滚动界面
+
+### 根因
+1. **生命周期钩子放错位置（导致界面"卡死/无内容"，连带滚动失效）**
+   - `pages/index/index.ts`、`pages/page/page.ts` 把 `onShow / onHide / onUnload` 写进了 `methods` 内部。
+   - HaaS UI 中 `onShow` 等是页面生命周期，必须由 `BasePage`（`base-page.js`）在 `onShow()` 里统一调度 `this.$root.onShow()`；**只有定义在组件选项顶层（与 data/computed/methods 平级）才会被调用**，放在 methods 里只是普通方法名，永不触发。
+   - 后果：登录态检测(getMe)、各列表加载(loadPublicMessages 等)、5s 轮询全部不执行 → 列表为空 → 看起来"滚不动/页面坏了"。
+
+2. **键盘"打不开"是定位裁切问题**
+   - 屏幕物理高仅 260px。index 页键盘在 `.login-page` 文档流末尾（非 fixed），`260 + 84(键盘高) = 344` 超出屏幕，键盘被裁到可视区外 → 用户看不到，误以为打不开。
+   - page 页普通键盘区 `chat-keyboard-area` 同样在文档流，键盘+输入栏(112px) 超出 260 被裁。
+
+### 修改内容
+- **index.ts / page.ts**：将 `onShow / onHide / onUnload` 移回选项顶层；`onHide/onUnload` 改用 `this.$page.clearInterval()` 规范清理轮询定时器（与 BasePage 封装一致）。
+- **index.vue + index.less**：键盘外层包 `<div class="login-kb-wrap" v-if="activeField">`，样式 `position: fixed; left:0; bottom:0; width:640px; z-index:50`，键盘悬浮底部不再撑破页面。
+- **page.less**：`.chat-keyboard-area` 改为 `position: fixed; left:0; bottom:0; width:640px; z-index:50`。弹窗模式键盘 `.chat-popup-keyboard` 原本已是 fixed，保留。
+- 键盘显隐与内容区高度联动（contentHeight 已随 keyboardVisible 减 84）逻辑保留，滚动容器获得正确固定高度。
+
+### 自检（无需编译，按 HaaS UI/Weex 规范审查）
+- 全量扫描 ui/src 下所有 .less：无多类名后代选择器（`.a .b`，Weex 不支持）、无多值 `border-radius`（如 `8px 0 0 8px`）、无 `:hover`（IoT 设备不支持）。均符合编译约束。
+- scroller 均设置固定宽高（width 静态类 + height 由 computed 固定 px 绑定），内容超高时滚动生效，符合知识.txt scroller 约束。
+- `pages/index/index.vue` 与 `pages/page/page.vue` 两入口页均存在，满足框架默认启动要求。
+
+### 重要规范约束（务必遵守，避免再次编译失败）
+- Weex 只支持**单类名选择器**，禁止 `.a .b` 后代选择器。
+- `border-radius` 只支持**单值**（如 `4px`），禁止 `8px 0 0 8px` 多值。
+- 不支持 `:hover` 伪类；仅交互组件支持 `:active / :disabled / :checked`。
+- `scroller` 必须固定 width + height，且内容尺寸 > 容器尺寸才滚动。
+- 生命周期 `onShow/onHide/onUnload/onLoad` 必须定义在组件选项顶层，不能塞进 methods。
+- 字体不要太小（屏幕小），界面放不下必须做滚动（scroller）。
+- JSAPI 以本项目 `ui/src/@types/falcon.d.ts` 为准：`$falcon.jsapi.storage.setStorage/getStorage`、`$falcon.jsapi.http.request`、`$falcon.jsapi.ui.showToast`。（注意：与知识.txt阿里云公开文档的 `storage.setItem`/`net.request` 命名不同，勿混用。）
+
+## 既有功能概览（修改前已存在，未改动）
+- 内置自定义键盘组件 `components/Keyboard.vue`（字母/数字/符号三模式，含 shift/退格/空格/回车），用于无物理键盘设备输入。
+- 登录/注册页（index）、聊天主页（page：公共/好友/群聊三 Tab、签到、搜索UID、创建/加入群、好友申请处理），消息富文本解析 `components/MessageItem.vue`。
+- API 封装 `lib/api.ts`、本地存储与用户态 `lib/store.ts`，后端 base `https://api.lt.132453.xyz`。
+
+## 2026-08-23 新增：中文输入 + 9键(T9)切换
+
+### 背景
+原先键盘只支持英文 26 键 / 数字 / 符号，无中文输入，也无 9 键。词典笔无系统输入法，需自绘键盘实现中文。
+
+### 新增内容
+- **新增词库 `components/pinyin-data.ts`**：离线精简拼音→汉字映射（约 400+ 常用字，拼音不带声调为 key）。运行时按拼音串查字，给出候选。
+- **`components/Keyboard.ts`** 改造：
+  - `mode` 新增 `'chinese'`（中文拼音模式）。入口：字母/数字/符号模式底部「中」键（action `tochinese`）进入；中文模式「EN」键（action `ch2en`）返回英文。
+  - 中文模式两种布局，由「9键」键（action `t9toggle`）切换：
+    - 全键盘中文（`layout: 'qwerty'`）：点击字母追加到拼音缓冲 `pinyin`，顶部候选栏（`.kb-candidate-bar`）显示匹配汉字，点候选字上屏。
+    - 9 键中文（`layout: 't9'`）：数字键 2-9（经典 T9 字母映射），**无计时点击循环**——点同一数字键在该键字母间循环切换（替换拼音串末位），点不同键即定稿上一键。
+  - 候选栏：拼音预览（左）+ 候选汉字横向列表（右），点击候选字 emit('input', 汉字) 并清空缓冲。
+  - 退格（中文）：先删拼音缓冲，缓冲空再 emit('back') 删已上屏内容。回车/空格（中文）：上屏首个候选；无候选且有拼音串则原样上屏。
+  - 键盘高度动态：中文模式 128px（候选栏 32 + 字母区 96），英文/数字/符号 96px。通过 `watch(mode/layout)` + `mounted` 调 `syncHeight()` emit('height', h) 通知父页面。
+- **`components/Keyboard.less`**：`.kb-container` 去掉固定 height（改由 `:style` 动态 height）；新增 `.kb-candidate-bar / .kb-pinyin / .kb-candidates / .kb-candidate / .kb-candidate-text / .kb-key-t9` 样式。仍遵守单类名、单值 border-radius 规范。
+- **`components/Keyboard.vue`**：容器加 `:style="{ height: kbHeight + 'px' }"`；`v-if="showCandidates"` 渲染候选栏；候选字 `@click="commitCandidate(ch)"`。
+- **`pages/page/page.ts`**：新增 `keyboardHeight: 96` 数据；`contentHeight` 由硬编码 `-= 96` 改为 `-= this.keyboardHeight`；新增 `onKbHeight(h)` 接收键盘高度事件。
+- **`pages/page/page.vue`**：两处 `<Keyboard>` 均加 `@height="onKbHeight"`，保证中文模式(128)下滚动区让位正确。
+- index 页键盘（登录/注册）为 fixed 悬浮，不影响布局，未接入 height 事件，使用键盘默认 96。
+
+### 自检（按 HaaS UI/Weex 规范）
+- 全量扫描 .less：无多类名选择器、无多值 border-radius、无 `:hover`，符合编译约束。
+- 所有 action 值（back/ch2en/enter/input/shift/space/t9/t9toggle/tochinese/to123/pinyin）均在 onKeyTap 有对应分支。
+- 键盘高度与 page 滚动区联动正确：中文 128、英文 96，contentHeight 随之调整。
+
+### 已知限制
+- 拼音词库为精简离线表（常用字），生僻字/词组未覆盖；T9 采用无计时点击循环（非真机长按），连续同键需点多次。
+
+## 2026-08-23 修复：中文键盘 bug（自查发现）
+
+新增中文/9键后自查发现 3 个 bug，已修复：
+1. **中文模式无法输入数字/符号**：进中文后无「123」入口。全键盘中文行1末尾、9键功能行均加「123」键（action `to123`）切到 numbers 模式；numbers 模式已有「中」键可回中文。形成 中文⇄123 闭环。
+2. **候选栏裁切无翻页**：原 `overflow:hidden` 裁掉后段候选字选不到。改为横向 `<scroller scroll-direction="horizontal">`（固定高32、宽由 flex:1），候选多时可横滑；`.kb-candidate` 加 `flex-shrink:0` 防止压缩。
+3. **全键盘中文第3行 10 键溢出挤压**：重排为 行1 qwertyuiop+123(11键)、行2 asdfghjkl+9键(10键)、行3 EN+zxcvbnm+back(9键)，消除过挤。
+
+### 修复后自检
+- .less 扫描：无多类名选择器、无多值 border-radius、无 `:hover` ✅
+- action 分支完整（含新增 to123）✅
+- 横向 scroller 固定宽高符合规范 ✅

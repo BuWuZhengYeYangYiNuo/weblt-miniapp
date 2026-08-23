@@ -26,6 +26,7 @@ export default defineComponent({
     },
   },
 
+  // 页面生命周期：进入前台时由 BasePage 统一调度，必须定义在选项顶层
   async onShow() {
     await initAuth()
     try {

@@ -25,7 +25,7 @@ export default defineComponent({
   data() {
     return {
       // letters | numbers | symbols | chinese
-      mode: 'letters' as 'letters' | 'numbers' | 'symbols' | 'chinese',
+      mode: 'chinese' as 'letters' | 'numbers' | 'symbols' | 'chinese',
       shift: false,
       // 中文模式下：qwerty(全键) | t9(9键)
       layout: 'qwerty' as 'qwerty' | 't9',
@@ -37,7 +37,7 @@ export default defineComponent({
       // 候选汉字
       candidates: [] as string[],
       // 当前键盘物理高度（行数不同则不同），用于通知父页面滚动区让位
-      kbHeight: 96,
+      kbHeight: 156,
     }
   },
 
@@ -309,9 +309,14 @@ export default defineComponent({
       this.$emit('input', ' ')
     },
 
-    // 同步键盘高度并通知父页面（中文模式多一行候选栏）
+    // 同步键盘内容高度并通知父页面（中文模式含拼音预览行 + 候选栏）
     syncHeight() {
-      this.kbHeight = this.mode === 'chinese' ? 128 : 96
+      if (this.mode === 'chinese') {
+        // 拼音预览行(28) + 候选栏(32) + 字母行
+        this.kbHeight = (this.layout === 't9' ? 2 : 3) * 28 + 60
+      } else {
+        this.kbHeight = 3 * 28
+      }
       this.$emit('height', this.kbHeight)
     },
   },

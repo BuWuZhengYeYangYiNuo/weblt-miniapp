@@ -1,8 +1,11 @@
 <template>
-  <div class="kb-container" :style="{ height: kbHeight + 'px' }">
-    <!-- 中文模式：拼音预览 + 候选栏（横向滚动） -->
+  <div class="kb-container">
+    <!-- 中文模式：拼音预览（独立一行，显示在候选栏上方） -->
+    <div class="kb-pinyin-bar" v-if="showCandidates">
+      <text class="kb-pinyin-text">{{ pinyin || ' ' }}</text>
+    </div>
+    <!-- 候选栏（横向滚动） -->
     <div class="kb-candidate-bar" v-if="showCandidates">
-      <text class="kb-pinyin">{{ pinyin }}</text>
       <scroller class="kb-candidates" scroll-direction="horizontal" :show-scrollbar="false">
         <div
           v-for="(ch, i) in candidates"

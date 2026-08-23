@@ -1,6 +1,7 @@
 {
   "name": "miniapp-template",
-  "appid": "8001749644971193",
+  "appName": "WebLT",
+  "appid": "8001145142333001",
   "version": "0.0.1",
   "description": "A miniapp template for YouDao Dictionary Pen",
   "icon": "app_icon.png",

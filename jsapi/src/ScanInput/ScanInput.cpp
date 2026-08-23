@@ -43,7 +43,7 @@ void ScanInput::initialize(ScanInputCallback callback)
                     {
                         if (lastString != "")
                         {
-                            system("miniapp_cli start 8001749644971193 softKeyboard");
+                            system("miniapp_cli start 8001145142333001 softKeyboard");
                             callback(currentString);
                         }
                         lastString = currentString;

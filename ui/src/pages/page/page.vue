@@ -181,12 +181,15 @@
       </div>
     </div>
 
-    <!-- 搜索/创建群 弹窗 -->
+    <!-- 搜索/创建群 弹窗：popup-input 也改用 div 避免 v-model 不同步 -->
     <div class="chat-popup" v-if="popupVisible">
       <div class="popup-mask" @click="closePopup"></div>
       <div class="popup-box">
         <text class="popup-title">{{ popupTitle }}</text>
-        <input class="popup-input" type="text" :placeholder="popupPlaceholder" v-model="popupInput" @focus="focusPopupInput" />
+        <div class="popup-input" @click="focusPopupInput" bubble="true">
+          <text class="popup-input-text" v-if="popupInput">{{ popupInput }}</text>
+          <text class="popup-input-placeholder" v-else>{{ popupPlaceholder }}</text>
+        </div>
         <div class="popup-btns">
           <div class="popup-cancel" @click="closePopup">
             <text class="popup-btn-text">取消</text>
@@ -198,9 +201,12 @@
       </div>
     </div>
 
-    <!-- 输入栏：原生 input，聚焦时系统自动弹输入法 -->
+    <!-- 输入栏：div 替代原生 input，避免 v-model 与自绘键盘字符不同步的问题 -->
     <div class="chat-input-bar" :style="{ marginBottom: keyboardHeight + 'px' }">
-      <input class="chat-input-field" type="text" placeholder="输入消息..." v-model="messageInput" @focus="focusMessageInput" />
+      <div class="chat-input-field" @click="focusMessageInput" bubble="true">
+        <text class="chat-input-text" v-if="messageInput">{{ messageInput }}</text>
+        <text class="chat-input-placeholder" v-else>输入消息...</text>
+      </div>
       <div class="chat-send-btn" @click="sendMessage">
         <text class="chat-send-text">发送</text>
       </div>

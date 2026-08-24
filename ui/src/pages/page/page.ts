@@ -51,12 +51,16 @@ export default defineComponent({
 
   computed: {
     contentHeight(): number {
-      let h = 260 - 28 - 28
+      // 聊天内容区高度：屏高 - topbar - input-bar(32) - 公告(20) - 键盘高度
+      // 键盘弹起时内容区主动缩小，让 input-bar 上移到键盘上方时仍能显示消息
+      let h = 260 - 28 - 32
       if (this.announcement) h -= 20
+      // 键盘弹起时减 kbHeight，但保底 28 让消息区域始终可见
+      h = Math.max(28, h - this.keyboardHeight)
       return h
     },
     sidebarHeight(): number {
-      return this.contentHeight - 24
+      return Math.max(28, this.contentHeight - 24)
     },
     popupVisible(): boolean {
       return this.showSearch || this.showCreate || this.showJoin
@@ -85,6 +89,8 @@ export default defineComponent({
       setUser(me)
       this.checkinPoints = me.points || 0
     } catch {
+      // token 失效：清掉本地凭证再跳登录页，避免 index.onShow 看到残留 token 再次跳回来形成死循环
+      await clearAuth()
       $falcon.navTo('index', {})
       return
     }
@@ -106,6 +112,8 @@ export default defineComponent({
       this.pollTimer = 0
     }
     this.keyboardTarget = ''
+    // 清掉键盘高度，否则切回聊天页时 input-bar 仍被顶起
+    this.keyboardHeight = 0
   },
 
   onUnload() {
@@ -114,6 +122,7 @@ export default defineComponent({
       this.pollTimer = 0
     }
     this.keyboardTarget = ''
+    this.keyboardHeight = 0
   },
 
   methods: {
@@ -138,6 +147,8 @@ export default defineComponent({
 
     closeKeyboard() {
       this.keyboardTarget = ''
+      // 关闭键盘时同步把 input-bar 顶高度清零，否则 input-bar 仍被顶着
+      this.keyboardHeight = 0
     },
 
     // 键盘上屏一个字符/汉字：回填到对应目标
@@ -161,6 +172,7 @@ export default defineComponent({
     // 键盘「确定」：收起自绘键盘
     onKeyboardConfirm() {
       this.keyboardTarget = ''
+      this.keyboardHeight = 0
     },
 
     // 键盘高度变化（来自 Keyboard 组件 emit 'height'）：用于把输入栏顶到键盘上方
@@ -169,6 +181,8 @@ export default defineComponent({
     },
 
     switchTab(tab: string) {
+      // 切 tab 时关闭自绘键盘（避免键盘一直浮在屏上挡内容）
+      this.keyboardTarget = ''
       this.activeTab = tab
     },
 
@@ -306,6 +320,8 @@ export default defineComponent({
       this.showJoin = false
       this.showCreate = true
       this.popupInput = ''
+      // 关闭 message 键盘，强制切换到 popup 模式
+      if (this.keyboardTarget === 'message') this.keyboardTarget = ''
     },
 
     showJoinGroup() {
@@ -313,6 +329,7 @@ export default defineComponent({
       this.showCreate = false
       this.showJoin = true
       this.popupInput = ''
+      if (this.keyboardTarget === 'message') this.keyboardTarget = ''
     },
 
     openSearch() {
@@ -320,6 +337,7 @@ export default defineComponent({
       this.showJoin = false
       this.showSearch = true
       this.popupInput = ''
+      if (this.keyboardTarget === 'message') this.keyboardTarget = ''
     },
 
     closePopup() {
@@ -327,6 +345,9 @@ export default defineComponent({
       this.showCreate = false
       this.showJoin = false
       this.popupInput = ''
+      // 关闭 popup 键盘，并清掉 input-bar 顶高度
+      this.keyboardTarget = ''
+      this.keyboardHeight = 0
     },
 
     async confirmPopup() {

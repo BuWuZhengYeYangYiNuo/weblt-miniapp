@@ -39,6 +39,7 @@
         class="msg-scroller-public"
         scroll-y
         show-scrollbar
+        bubble="true"
         :style="{ width: '100%', height: contentHeight + 'px' }"
       >
         <div class="msg-list">
@@ -64,16 +65,16 @@
           class="sidebar-scroller"
           scroll-y
           show-scrollbar
+          bubble="true"
           :style="{ width: '100px', height: sidebarHeight + 'px' }"
         >
-          <!-- bubble="true" 阻止父级 scroller 吞 click/tap 事件 -->
-          <div v-for="req in friendRequests" :key="req.id" class="sidebar-req" bubble="true">
+          <div v-for="req in friendRequests" :key="req.id" class="sidebar-req">
             <text class="sidebar-req-name">{{ req.nickname || req.username }}</text>
             <div class="sidebar-req-btns">
-              <div class="sidebar-req-accept" @click="handleRequest(req.request_id, 'accepted')" bubble="true">
+              <div class="sidebar-req-accept" @click="handleRequest(req.request_id, 'accepted')">
                 <text class="sidebar-req-btn-text">接</text>
               </div>
-              <div class="sidebar-req-reject" @click="handleRequest(req.request_id, 'rejected')" bubble="true">
+              <div class="sidebar-req-reject" @click="handleRequest(req.request_id, 'rejected')">
                 <text class="sidebar-req-btn-text">拒</text>
               </div>
             </div>
@@ -84,7 +85,6 @@
             class="sidebar-item"
             :class="selectedFriend && selectedFriend.id === f.id ? 'sidebar-item-active' : ''"
             @click="selectFriend(f)"
-            bubble="true"
           >
             <text class="sidebar-name">{{ f.nickname || f.username }}</text>
           </div>
@@ -132,6 +132,7 @@
           class="sidebar-scroller"
           scroll-y
           show-scrollbar
+          bubble="true"
           :style="{ width: '100px', height: sidebarHeight + 'px' }"
         >
           <div
@@ -140,7 +141,6 @@
             class="sidebar-item"
             :class="selectedGroup && selectedGroup.id === g.id ? 'sidebar-item-active' : ''"
             @click="selectGroup(g)"
-            bubble="true"
           >
             <text class="sidebar-name">{{ g.name }}</text>
             <text class="sidebar-sub">{{ g.invite_code }}</text>
@@ -187,7 +187,7 @@
       <div class="popup-mask" @click="closePopup"></div>
       <div class="popup-box">
         <text class="popup-title">{{ popupTitle }}</text>
-        <div class="popup-input" @click="focusPopupInput" bubble="true">
+        <div class="popup-input" @click="focusPopupInput">
           <text class="popup-input-text" v-if="popupInput">{{ popupInput }}</text>
           <text class="popup-input-placeholder" v-else>{{ popupPlaceholder }}</text>
         </div>
@@ -204,7 +204,7 @@
 
     <!-- 输入栏：div 替代原生 input，避免 v-model 与自绘键盘字符不同步的问题 -->
     <div class="chat-input-bar" :style="{ marginBottom: keyboardHeight + 'px' }">
-      <div class="chat-input-field" @click="focusMessageInput" bubble="true">
+      <div class="chat-input-field" @click="focusMessageInput">
         <text class="chat-input-text" v-if="messageInput">{{ messageInput }}</text>
         <text class="chat-input-placeholder" v-else>输入消息...</text>
       </div>

@@ -79,6 +79,11 @@ export default defineComponent({
 
   // 页面生命周期：进入前台时由 BasePage 统一调度，必须定义在选项顶层
   async onShow() {
+    // 防止 onShow 重入时 setInterval 泄漏：先清掉旧的 pollTimer
+    if (this.pollTimer) {
+      this.$page.clearInterval(this.pollTimer)
+      this.pollTimer = 0
+    }
     await initAuth()
     this.userInfo = getUser() || this.userInfo
     this.checkinPoints = this.userInfo.points || 0
@@ -241,9 +246,13 @@ export default defineComponent({
 
     async loadFriendMessages() {
       if (!this.selectedFriend) return
+      const fid = this.selectedFriend.id
       try {
-        const data = await api.getPrivateMessages(this.selectedFriend.id, 100)
-        this.friendMessages = data || []
+        const data = await api.getPrivateMessages(fid, 100)
+        // 防止竞态：用户切到其他 friend 后慢请求才返回，覆盖正确数据
+        if (this.selectedFriend && this.selectedFriend.id === fid) {
+          this.friendMessages = data || []
+        }
       } catch {}
     },
 
@@ -273,9 +282,13 @@ export default defineComponent({
 
     async loadGroupMessages() {
       if (!this.selectedGroup) return
+      const gid = this.selectedGroup.id
       try {
-        const data = await api.getGroupMessages(this.selectedGroup.id, 100)
-        this.groupMessages = data || []
+        const data = await api.getGroupMessages(gid, 100)
+        // 防止竞态：用户切到其他 group 后慢请求才返回，覆盖正确数据
+        if (this.selectedGroup && this.selectedGroup.id === gid) {
+          this.groupMessages = data || []
+        }
       } catch {}
     },
 

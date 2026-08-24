@@ -6,28 +6,24 @@
     </div>
 
     <div class="login-form">
-      <div class="login-field" @click="focusField('username')">
+      <div class="login-field">
         <text class="login-label">用户名</text>
-        <text class="login-value" v-if="username">{{ username }}</text>
-        <text class="login-placeholder" v-else>输入用户名</text>
+        <input class="login-input" type="text" placeholder="输入用户名" v-model="username" />
       </div>
 
-      <div class="login-field" @click="focusField('password')">
+      <div class="login-field">
         <text class="login-label">密码</text>
-        <text class="login-value" v-if="password">{{ maskPassword }}</text>
-        <text class="login-placeholder" v-else>输入密码</text>
+        <input class="login-input" type="password" placeholder="输入密码" v-model="password" />
       </div>
 
-      <div class="login-field" v-if="isRegister" @click="focusField('email')">
+      <div class="login-field" v-if="isRegister">
         <text class="login-label">邮箱</text>
-        <text class="login-value" v-if="email">{{ email }}</text>
-        <text class="login-placeholder" v-else>输入邮箱</text>
+        <input class="login-input" type="text" placeholder="输入邮箱" v-model="email" />
       </div>
 
-      <div class="login-field" v-if="isRegister" @click="focusField('code')">
+      <div class="login-field login-field-code" v-if="isRegister">
         <text class="login-label">验证码</text>
-        <text class="login-value" v-if="code">{{ code }}</text>
-        <text class="login-placeholder" v-else>输入验证码</text>
+        <input class="login-input" type="text" placeholder="输入验证码" v-model="code" />
         <div class="login-code-btn" @click.stop="sendCode">
           <text class="login-code-text">{{ codeSent ? '已发送' : '发送' }}</text>
         </div>
@@ -45,9 +41,6 @@
         <text class="login-status-text">{{ statusText }}</text>
       </div>
     </div>
-
-    <!-- 输入框聚焦时拉起系统输入法（有道输入法），不再使用自绘键盘，
-         避免小屏(260px)自绘键盘溢出/裁切问题。 -->
   </div>
 </template>
 

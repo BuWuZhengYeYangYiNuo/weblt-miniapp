@@ -146,10 +146,7 @@
       <div class="popup-mask" @click="closePopup"></div>
       <div class="popup-box">
         <text class="popup-title">{{ popupTitle }}</text>
-        <div class="popup-input" @click="focusPopupInput">
-          <text class="popup-input-value" v-if="popupInput">{{ popupInput }}</text>
-          <text class="popup-input-placeholder" v-else>{{ popupPlaceholder }}</text>
-        </div>
+        <input class="popup-input" type="text" :placeholder="popupPlaceholder" v-model="popupInput" />
         <div class="popup-btns">
           <div class="popup-cancel" @click="closePopup">
             <text class="popup-btn-text">取消</text>
@@ -161,20 +158,12 @@
       </div>
     </div>
 
-    <!-- 输入栏 -->
-    <div class="chat-input-bar" v-if="!keyboardVisible">
-      <div class="chat-input-field" @click="focusMessageInput">
-        <text class="chat-input-text" v-if="messageInput">{{ messageInput }}</text>
-        <text class="chat-input-placeholder" v-else>输入消息...</text>
-      </div>
+    <!-- 输入栏：原生 input，聚焦时系统自动弹输入法 -->
+    <div class="chat-input-bar">
+      <input class="chat-input-field" type="text" placeholder="输入消息..." v-model="messageInput" />
       <div class="chat-send-btn" @click="sendMessage">
         <text class="chat-send-text">发送</text>
       </div>
-    </div>
-
-    <!-- 系统输入法拉起中（全屏覆盖，本 app 退后台，无需自绘键盘让位） -->
-    <div class="chat-input-bar chat-input-busy" v-if="keyboardVisible">
-      <text class="chat-input-placeholder">系统输入法中…（完成后自动返回）</text>
     </div>
 
     <!-- 群创建结果/好友搜索结果弹窗 -->

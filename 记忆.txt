@@ -119,3 +119,29 @@
 - 前端：`Keyboard` 组件文件保留（潜在 fallback），页面已不再渲染，无编译引用残留（index/page 的 components 已移除 Keyboard）。
 - native：SystemIME.cpp 符合 JQPublishObject 用法，与 ScanInput/JSAI 同构；CMake GLOB 自动包含。
 - 类型：falcon.d.ts 已声明 systemIME；systemIme.ts 调用路径一致。
+
+---
+
+## 重大方向修正：系统输入法是"自动弹"的，不是"被调用"的（2026-08-24）
+
+### 事实来源
+- 用户亲测：在词典笔上点终端/输入框，系统级输入法**自动弹出**，app 无需主动拉起。
+- 解包一个亲测可用的同运行时 app（`8001771940015915` 文件管理器，QuickJS 字节码 + `libjsapi_shell.so`/`fileserver.so`）：
+  - `.so` 中**无任何** `miniapp_cli`/`startApp`/`softKeyboard`/`openApp` 符号 → 该运行时**不暴露拉起系统输入法的 API**。
+  - 其 `showInputModal` 是自绘 UI 弹窗（重命名用），不是系统输入法。
+- 项目 `aiot-vue-cli/.../config.js`：`input` 在 `weexRegisteredComponents` 白名单，`input/change/focus/blur/return` 是原生事件 → **原生 `<input>` 可用，聚焦时系统自动弹输入法**。
+
+### 结论
+- 之前假设"用 `system("miniapp_cli start 8001666679481944 softKeyboard")` 主动拉起系统输入法"是**错误**的，该机制在此运行时不存在。
+- 正确做法：**用原生 `<input>` 替代自绘假输入框**，让系统自己弹输入法，文字经 `v-model` 直接回填。彻底删掉 SystemIME 模块与 systemIme.ts。
+
+### 本次改动
+- 删除 `jsapi/src/SystemIME/`（目录）、`ui/src/lib/systemIme.ts`、`falcon.d.ts` 的 systemIME 声明；JSAPI.cpp 还原（移除 SystemIME 导入/注册）。
+- `index.vue`/`index.ts`：4 个假输入框 → 原生 `<input type=text|password v-model>`；移除 focusField/activeField/onInput/onBack/onEnter/handleIME*/SystemIME 绑定。
+- `page.vue`/`page.ts`：底部输入栏与弹窗输入框 → 原生 `<input v-model>`；移除 keyboardVisible/kbTarget/focus*/handleIME*/SystemIME 绑定；contentHeight 恢复为不扣键盘高度。
+- `index.less` 加 `.login-input`；`page.less` 的 `.chat-input-field`/`.popup-input` 改为 input 样式（去 flex/`display:flex`、加 font-size/color/border-width:0）。
+- 编译禁忌扫描通过（无后代选择器、无多值 border-radius、无 :hover）；input 标签 6 处正确接入；无残留禁用引用。
+
+### 待真机验证
+- 原生 `<input>` 聚焦时系统输入法是否自动弹出、中文能否正常输入与回填。
+- `Keyboard.vue`/`.ts`/`.less` 组件文件已无引用，可后续清理删除（当前保留作历史参考）。

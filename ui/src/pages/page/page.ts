@@ -2,7 +2,6 @@ import { defineComponent } from 'vue'
 import MessageItem from '../../components/MessageItem.vue'
 import { api, showToast } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
-import { openIME, onIMEInput, onIMEState, offIMEInput, offIMEState } from '../../lib/systemIme'
 
 export default defineComponent({
   components: { MessageItem },
@@ -11,7 +10,6 @@ export default defineComponent({
     return {
       userInfo: getUser() || { id: '', uid: '', username: '', nickname: '', points: 0 },
       activeTab: 'public' as string,
-      keyboardVisible: false,
       messageInput: '',
 
       // 公共
@@ -41,7 +39,6 @@ export default defineComponent({
       showJoin: false,
       popupInput: '',
       searchResult: null as any,
-      kbTarget: 'message' as 'message' | 'popup',
 
       // 轮询
       pollTimer: 0 as any,
@@ -50,7 +47,6 @@ export default defineComponent({
 
   computed: {
     contentHeight(): number {
-      // 系统输入法为全屏覆盖，拉起时本 app 退到后台，无需为键盘让出内容高度。
       let h = 260 - 28 - 28
       if (this.announcement) h -= 20
       return h
@@ -79,9 +75,6 @@ export default defineComponent({
     this.userInfo = getUser() || this.userInfo
     this.checkinPoints = this.userInfo.points || 0
 
-    onIMEInput(this.handleIMEInput)
-    onIMEState(this.handleIMEState)
-
     try {
       const me = await api.getMe()
       this.userInfo = me
@@ -108,8 +101,6 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
-    offIMEInput(this.handleIMEInput)
-    offIMEState(this.handleIMEState)
   },
 
   onUnload() {
@@ -117,8 +108,6 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
-    offIMEInput(this.handleIMEInput)
-    offIMEState(this.handleIMEState)
   },
 
   methods: {
@@ -134,7 +123,6 @@ export default defineComponent({
 
     switchTab(tab: string) {
       this.activeTab = tab
-      this.keyboardVisible = false
     },
 
     formatTime(timeStr: string): string {
@@ -292,19 +280,6 @@ export default defineComponent({
       this.showCreate = false
       this.showJoin = false
       this.popupInput = ''
-      this.keyboardVisible = false
-    },
-
-    focusPopupInput() {
-      this.kbTarget = 'popup'
-      this.keyboardVisible = true
-      openIME(this.popupPlaceholder)
-    },
-
-    focusMessageInput() {
-      this.kbTarget = 'message'
-      this.keyboardVisible = true
-      openIME('输入消息')
     },
 
     async confirmPopup() {
@@ -343,7 +318,6 @@ export default defineComponent({
 
     closeSearchResult() {
       this.searchResult = null
-      this.keyboardVisible = false
     },
 
     async addFriend() {
@@ -374,26 +348,8 @@ export default defineComponent({
           await this.loadGroupMessages()
         }
         this.messageInput = ''
-        this.keyboardVisible = false
       } catch (err: any) {
         showToast(err.message)
-      }
-    },
-
-    // 系统输入法回传文字：按当前聚焦目标回填
-    handleIMEInput(text: string) {
-      if (this.kbTarget === 'popup') {
-        this.popupInput += text
-      } else {
-        this.messageInput += text
-      }
-    },
-
-    // 系统输入法前台/后台状态变化
-    handleIMEState(open: boolean) {
-      if (!open) {
-        // 输入法退到后台，本 app 回到前台
-        this.keyboardVisible = false
       }
     },
 

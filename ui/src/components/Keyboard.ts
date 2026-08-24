@@ -1,4 +1,5 @@
 import { defineComponent } from 'vue'
+import { lookupPinyin, FIRST_LETTER_INDEX } from '../lib/pinyin-data'
 
 interface KbKey {
   id: string
@@ -20,18 +21,6 @@ const T9_KEYS: { digit: string; letters: string }[] = [
   { digit: '9', letters: 'wxyz' },
 ]
 
-// IME 词库较大，initialize 一次性加载，全局只调一次
-let imeInitialized = false
-async function ensureIME() {
-  if (imeInitialized) return
-  try {
-    await ($falcon as any).jsapi.IME.initialize()
-    imeInitialized = true
-  } catch (e) {
-    console.error('[Keyboard] IME initialize failed:', e)
-  }
-}
-
 export default defineComponent({
   data() {
     return {
@@ -44,12 +33,12 @@ export default defineComponent({
       pinyin: '',
       // 英文/数字/符号模式：最近输入的字符缓冲（用于 input preview bar 显示）
       inputBuffer: '' as string,
-      // 9 键点击状态：上一次按的数字键 与 该键已点次数
+      // 9 键点击状态：上一次按的数字键 与 该键已的位次数
       t9LastDigit: '' as string,
       t9TapCount: 0,
-      // 候选汉字
+      // 候选汉字（来自内置 pinyin-data.ts，不依赖 native IME）
       candidates: [] as string[],
-      // 当前键盘物理高度（行数不同则不同），用于通知父页面滚动区让位
+      // 当前键盘物理状态（行数不同则不同），用于通知父页面滚动区让位
       kbHeight: 156,
     }
   },
@@ -64,7 +53,7 @@ export default defineComponent({
   },
 
   mounted() {
-    ensureIME()
+    // 不再调 native IME.initialize()（在词典笔上可能崩溃），直接使用内置拼音数据
     this.syncHeight()
   },
 
@@ -204,43 +193,26 @@ export default defineComponent({
       }))
     },
 
-    // 根据当前拼音缓冲刷新候选汉字（调用本地 IME 引擎）
-    async refreshCandidates() {
+    // 根据当前拼音缓冲查候选汉字：优先全拼匹配，未匹配则退化到首字母匹配
+    refreshCandidates() {
       const py = this.pinyin.trim().toLowerCase()
       if (!py) {
         this.candidates = []
         return
       }
-      // 等 IME 初始化完成再取候选，避免 getCandidates 早于 initialize 调用导致抛错
-      await ensureIME()
-      try {
-        // IME.getCandidates 是同步函数（JQFunctionInfo），直接返回 Bson 数组，
-        // 不要 await（await 非 Promise 在某些 quickjs 实现里可能抛错）
-        const res = ($falcon as any).jsapi.IME.getCandidates(py)
-        // 返回 [{hanZi, freq, pinyin:[...]}] 或字符串数组，统一抽取 hanZi
-        if (Array.isArray(res)) {
-          this.candidates = res.map((c: any) => (typeof c === 'string' ? c : c.hanZi)).filter(Boolean)
-        } else {
-          this.candidates = []
-        }
-      } catch (e) {
-        console.error('[Keyboard] getCandidates failed:', e)
-        this.candidates = []
+      // 1. 完整拼音匹配（首选）
+      let cands = lookupPinyin(py)
+      // 2. fallback：拼音首字母匹配（如输入 "n" 看到所有 n 开头拼音的字）
+      if (cands.length === 0 && py.length <= 2) {
+        cands = FIRST_LETTER_INDEX[py] || []
       }
+      this.candidates = cands
     },
 
-    // 上屏一个汉字，并反馈词频给 IME
+    // 上屏一个汉字
     commitCandidate(ch: string) {
       this.$emit('input', ch)
-      // 更新词频（拼音可能含多音节，用空格分隔的拼音数组）
-      const pyArr = this.pinyin.trim().toLowerCase().split(/\s+/).filter(Boolean)
-      if (pyArr.length) {
-        try {
-          ($falcon as any).jsapi.IME.updateWordFrequency(pyArr, ch)
-        } catch (e) {
-          /* 忽略词频更新失败 */
-        }
-      }
+      // IME 词频更新跳过（native IME 不可用，纯前端无法持久化频率）
       // 上屏后清空拼音缓冲，准备下一次输入
       this.pinyin = ''
       this.t9LastDigit = ''

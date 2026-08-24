@@ -14,11 +14,12 @@ type Falcon = {
     navTo<T>(target: string, options: T): void,
     jsapi: {
         storage: {
-            setStorage(params: { key: string; data: string }): Promise<any>;
-            getStorage(params: { key: string }): Promise<{ data: string }>;
-            getStorageInfo(params: {}): Promise<{ keys: string[]; currentSize: number; limitSize: number; }>;
+            // 文档明确：字段名是 value，不是 data；返回 string 不是 {data: string}
+            setItem(params: { key: string; value: string }): Promise<any>;
+            getItem(params: { key: string }): Promise<string>;
+            removeItem(params: { key: string }): Promise<any>;
         },
-        http: {
+        net: {
             request(params: {
                 url: string,
                 method?: HttpRequestMethod,

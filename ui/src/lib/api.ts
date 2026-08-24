@@ -3,14 +3,11 @@ const API_BASE = 'https://api.lt.132453.xyz'
 
 let _token: string = ''
 
+import { getItem } from './mem-storage'
+
 export async function loadToken() {
-  try {
-    // getItem 直接返回 string 值（不是 {data: string}），字段名是 key 不是 keys
-    const v = await $falcon.jsapi.storage.getItem({ key: 'token' })
-    _token = v || ''
-  } catch {
-    _token = ''
-  }
+  // 使用 mem-storage 兜底（jsapi.storage 可能崩溃）
+  _token = await getItem('token')
 }
 
 export function getToken() { return _token }

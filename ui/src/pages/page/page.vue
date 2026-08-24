@@ -181,8 +181,9 @@
       </div>
     </div>
 
-    <!-- 搜索/创建群 弹窗：popup-input 也改用 div 避免 v-model 不同步 -->
-    <div class="chat-popup" v-if="popupVisible">
+    <!-- 搜索/创建群 弹窗：popup-input 也改用 div 避免 v-model 不同步
+         键盘弹起时 popup 贴顶，避免被 fixed bottom 0 的键盘盖住 -->
+    <div class="chat-popup" :class="keyboardHeight > 0 ? 'chat-popup-kb' : ''" v-if="popupVisible">
       <div class="popup-mask" @click="closePopup"></div>
       <div class="popup-box">
         <text class="popup-title">{{ popupTitle }}</text>

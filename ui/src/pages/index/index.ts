@@ -20,7 +20,13 @@ export default defineComponent({
 
   // 页面生命周期：进入前台时由 BasePage 统一调度，必须定义在选项顶层
   async onShow() {
-    await initAuth()
+    try {
+      await initAuth()
+    } catch {
+      // 初始化失败不致命，清空本地状态继续等用户输入
+      this.username = ''
+      this.password = ''
+    }
     // 仅当本地已有 token 和 user 时才自动跳到聊天页，避免与用户点登录的 handleSubmit 抢时序：
     // 旧实现每次 onShow 都调 api.getMe()，如果 token 有效，await 完成瞬间会 navTo('page')
     // 把用户跳走，此时用户刚点的 handleSubmit 还在 await api.login，登录结果被丢弃，用户感觉"没反应"。

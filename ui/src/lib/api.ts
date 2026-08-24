@@ -19,21 +19,37 @@ async function request(path: string, options: { method?: string; data?: any } = 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (_token) headers['Authorization'] = `Bearer ${_token}`
 
-  const res = await $falcon.jsapi.http.request({
-    url: `${API_BASE}/api${path}`,
-    method: (options.method || 'GET') as any,
-    headers,
-    data: options.data ? JSON.stringify(options.data) : undefined,
-    timeout: 10000,
-  })
+  let res: any
+  try {
+    res = await $falcon.jsapi.http.request({
+      url: `${API_BASE}/api${path}`,
+      method: (options.method || 'GET') as any,
+      headers,
+      data: options.data ? JSON.stringify(options.data) : undefined,
+      timeout: 10000,
+    })
+  } catch (err: any) {
+    // native http.request 抛错时通常是网络/DNS 失败（词典笔没网），带 message 让上层 toast 提示
+    throw new Error(err?.message || '网络异常，请检查网络连接')
+  }
+
+  // 防止 res 为 null/undefined（native 引擎异常）
+  if (!res) {
+    throw new Error('网络异常，请稍后重试')
+  }
 
   let data = res.data
   if (typeof data === 'string') {
     try { data = JSON.parse(data) } catch {}
   }
 
-  if (res.statusCode >= 400) {
-    throw new Error(data?.error || '请求失败')
+  // statusCode 为 0 或缺失通常意味着网络层失败
+  const sc = res.statusCode
+  if (typeof sc !== 'number' || sc === 0) {
+    throw new Error('网络异常，请检查网络连接')
+  }
+  if (sc >= 400) {
+    throw new Error(data?.error || `请求失败 (${sc})`)
   }
   return data
 }

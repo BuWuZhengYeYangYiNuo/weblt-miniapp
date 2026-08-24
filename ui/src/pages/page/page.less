@@ -397,6 +397,12 @@
   z-index: 104;
 }
 
+// 键盘弹起时：弹窗贴顶，避免被 fixed bottom 0 的键盘盖住大部分
+.chat-popup-kb {
+  align-items: flex-start;
+  padding-top: 4px;
+}
+
 .popup-mask {
   position: fixed;
   top: 0;

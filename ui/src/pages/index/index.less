@@ -1,18 +1,23 @@
+// 登录页用 absolute 布局：避开 flex column 容器里 native scroller 高度不可控问题
 .login-page {
+  position: relative;
   width: 100%;
   height: 260px;
   background-color: #1a1a2e;
-  display: flex;
-  flex-direction: column;
 }
 
 .login-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 40px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   background-color: #16213e;
+  z-index: 2;
 }
 
 .login-title {
@@ -27,11 +32,13 @@
   margin-left: 12px;
 }
 
+// scroller 占中间区：top:40, bottom:48(btn 36+marg 12) → 高度 172
 .login-form {
-  // scroller 组件本身负责滚动，这里不要 flex column 撑高；
-  // 用 block + 内边距让字段自然堆叠，超出 scroller 高度即可滚动
+  position: absolute;
+  top: 40px;
+  left: 0;
   width: 100%;
-  padding: 8px 40px;
+  bottom: 48px;
   background-color: #1a1a2e;
 }
 
@@ -67,14 +74,20 @@
   color: #ffffff;
 }
 
+// 登录按钮：fixed bottom 8px 永远可见；z-index 250 > 键盘 200，键盘弹起时压在键盘上方
+// 不跟随键盘移动——保证任何时候登录按钮可见，输完密码可直接点
 .login-btn {
+  position: fixed;
+  bottom: 8px;
+  left: 0;
+  width: 100%;
   height: 36px;
   background-color: #3b82f6;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 8px;
+  z-index: 250;
 }
 
 // 按钮按压反馈：短暂变浅蓝/亮色

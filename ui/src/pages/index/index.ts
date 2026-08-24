@@ -15,6 +15,8 @@ export default defineComponent({
       loading: false,
       activeField: '' as string,
       keyboardVisible: false,
+      // 键盘当前高度，0 表示键盘收起；用于把登录按钮上移避免被键盘遮挡
+      keyboardHeight: 0,
     }
   },
 
@@ -46,6 +48,7 @@ export default defineComponent({
     closeKeyboard() {
       this.keyboardVisible = false
       this.activeField = ''
+      this.keyboardHeight = 0
     },
 
     // 键盘上屏一个字符/汉字：回填到当前聚焦字段
@@ -68,6 +71,12 @@ export default defineComponent({
     onKeyboardConfirm() {
       this.keyboardVisible = false
       this.activeField = ''
+      this.keyboardHeight = 0
+    },
+
+    // 键盘 layout/mode 变化时 emit 当前高度，让登录按钮上移避免被键盘遮挡
+    onKeyboardHeight(h: number) {
+      this.keyboardHeight = h || 0
     },
 
     toggleMode() {

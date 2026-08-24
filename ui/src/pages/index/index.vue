@@ -6,15 +6,13 @@
     </div>
 
     <!-- 字段用 scroller 装（5字段总高 > 中间区域，必要时滚动）。
-         但登录/切换按钮必须放在 scroller 之外——Weex scroller 会吞掉内部 click/tap
-         手势（touch 事件优先用于滚动），按钮在 scroller 里点了不会触发 @click/@tap。
-         scroller 加 bubble="true"，让 HaaS UI precompiler 知道子元素 click 不应被 stop 替换为 $stopOuterA -->
+         bubble="true" 让 precompiler 知道子元素 click 不应被 stop 替换为 $stopOuterA。
+         absolute 布局 + 显式 height 由 less 控制，避免 flex 列容器里高度塌陷。 -->
     <scroller
       class="login-form"
       scroll-y
       show-scrollbar
       bubble="true"
-      :style="{ width: '100%', height: (260 - 40 - 44) + 'px' }"
     >
       <div class="login-field" @click="focusField('username')">
         <text class="login-label">用户名</text>
@@ -52,7 +50,7 @@
       </div>
     </scroller>
 
-    <!-- 登录按钮：scroller 之外，不被吞事件 -->
+    <!-- 登录按钮：fixed bottom 8px，z-index 250 永远位于键盘之上，键盘弹起时也可见 -->
     <div class="login-btn" @click="handleSubmit">
       <text class="login-btn-text">{{ isRegister ? '注册' : '登录' }}</text>
     </div>

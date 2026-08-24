@@ -2,7 +2,7 @@ import { defineComponent } from 'vue'
 import MessageItem from '../../components/MessageItem.vue'
 import { api, showToast } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
-import { startScanInput, onScanInput, offScanInput } from '../../lib/scanInput'
+import { startScanInput, onScanInput } from '../../lib/scanInput'
 
 export default defineComponent({
   components: { MessageItem },
@@ -44,6 +44,9 @@ export default defineComponent({
 
       // 轮询
       pollTimer: 0 as any,
+
+      // ScanInput 解绑函数（onShow 时由 onScanInput 返回）
+      _scanUnbind: null as null | (() => void),
     }
   },
 
@@ -75,7 +78,7 @@ export default defineComponent({
   async onShow() {
     await initAuth()
     this.userInfo = getUser() || this.userInfo
-    onScanInput(this.handleScanInput)
+    this._scanUnbind = onScanInput(this.handleScanInput)
     this.checkinPoints = this.userInfo.points || 0
 
     try {
@@ -104,7 +107,10 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
-    offScanInput(this.handleScanInput)
+    if (this._scanUnbind) {
+      this._scanUnbind()
+      this._scanUnbind = null
+    }
   },
 
   onUnload() {
@@ -112,7 +118,10 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
-    offScanInput(this.handleScanInput)
+    if (this._scanUnbind) {
+      this._scanUnbind()
+      this._scanUnbind = null
+    }
   },
 
   methods: {

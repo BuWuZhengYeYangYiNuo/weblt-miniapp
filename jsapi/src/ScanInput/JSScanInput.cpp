@@ -54,6 +54,20 @@ void JSSCAN_INPUT::deinitialize(JQAsyncInfo &info)
     }
 }
 
+void JSSCAN_INPUT::showKeyboard(JQAsyncInfo &info)
+{
+    try
+    {
+        ASSERT(info.Length() == 0);
+        ScanInputObject->showKeyboard();
+        info.post({});
+    }
+    catch (const std::exception &e)
+    {
+        info.postError(e.what());
+    }
+}
+
 JSValue createScanInput(JQModuleEnv *env)
 {
     JQFunctionTemplateRef tpl = JQFunctionTemplate::New(env, "ScanInput");
@@ -62,6 +76,7 @@ JSValue createScanInput(JQModuleEnv *env)
 
     tpl->SetProtoMethodPromise("initialize", &JSSCAN_INPUT::initialize);
     tpl->SetProtoMethodPromise("deinitialize", &JSSCAN_INPUT::deinitialize);
+    tpl->SetProtoMethodPromise("showKeyboard", &JSSCAN_INPUT::showKeyboard);
 
     JSSCAN_INPUT::InitTpl(tpl);
     return tpl->CallConstructor();

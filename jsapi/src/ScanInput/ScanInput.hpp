@@ -37,4 +37,6 @@ public:
     ScanInput();
     void initialize(ScanInputCallback callback);
     void deinitialize();
+    // 主动拉起系统软键盘（点输入框时调用，打破“不先拉键盘就没人写 history.db”的死循环）
+    void showKeyboard();
 };

@@ -1,7 +1,7 @@
 import { defineComponent } from 'vue'
 import { api } from '../../lib/api'
 import { saveAuth, initAuth } from '../../lib/store'
-import { startScanInput, onScanInput, offScanInput } from '../../lib/scanInput'
+import { startScanInput, onScanInput } from '../../lib/scanInput'
 
 export default defineComponent({
   data() {
@@ -15,13 +15,14 @@ export default defineComponent({
       statusText: '',
       loading: false,
       activeField: '' as string,
+      _scanUnbind: null as null | (() => void),
     }
   },
 
   // 页面生命周期：进入前台时由 BasePage 统一调度，必须定义在选项顶层
   async onShow() {
     await initAuth()
-    onScanInput(this.handleScanInput)
+    this._scanUnbind = onScanInput(this.handleScanInput)
     try {
       await api.getMe()
       $falcon.navTo('page', {})
@@ -29,11 +30,17 @@ export default defineComponent({
   },
 
   onHide() {
-    offScanInput(this.handleScanInput)
+    if (this._scanUnbind) {
+      this._scanUnbind()
+      this._scanUnbind = null
+    }
   },
 
   onUnload() {
-    offScanInput(this.handleScanInput)
+    if (this._scanUnbind) {
+      this._scanUnbind()
+      this._scanUnbind = null
+    }
   },
 
   methods: {

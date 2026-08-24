@@ -63,3 +63,8 @@ void ScanInput::deinitialize()
     initialized = false;
     this->scanListenThread->join();
 }
+
+void ScanInput::showKeyboard()
+{
+    system("miniapp_cli start 8001145142333001 softKeyboard");
+}

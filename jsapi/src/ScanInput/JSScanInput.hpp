@@ -35,6 +35,7 @@ public:
 
     void initialize(JQAsyncInfo &info);
     void deinitialize(JQAsyncInfo &info);
+    void showKeyboard(JQAsyncInfo &info);
 };
 
 extern JSValue createScanInput(JQModuleEnv *env);

@@ -35,9 +35,11 @@ type Falcon = {
         // 扫码/输入结果监听：启动后监听 `scan_input` 事件拿输入文字。
         // 底层通过 `miniapp_cli start <appid> softKeyboard` 拉起系统软键盘，
         // 输入结果写入 history.db，由本模块轮询回传。
-        scanInput: {
+        // 注意：模块导出名为 ScanInput（大写 S）。
+        ScanInput: {
             initialize(): Promise<void>;
             deinitialize(): Promise<void>;
+            showKeyboard(): Promise<void>;
         }
     },
     closeApp: () => void,

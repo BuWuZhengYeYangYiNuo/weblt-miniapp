@@ -21,8 +21,10 @@ export async function saveAuth(token: string, user: UserInfo) {
   setToken(token)
   _user = user
   try {
-    await $falcon.jsapi.storage.setStorage({ key: 'token', data: token })
-    await $falcon.jsapi.storage.setStorage({ key: 'user', data: JSON.stringify(user) })
+    // 文档明确：$falcon.jsapi.storage.setItem({key, value})，
+    // 字段名是 value 不是 data
+    await $falcon.jsapi.storage.setItem({ key: 'token', value: token })
+    await $falcon.jsapi.storage.setItem({ key: 'user', value: JSON.stringify(user) })
   } catch {}
 }
 
@@ -30,15 +32,16 @@ export async function clearAuth() {
   setToken('')
   _user = null
   try {
-    await $falcon.jsapi.storage.setStorage({ key: 'token', data: '' })
-    await $falcon.jsapi.storage.setStorage({ key: 'user', data: '' })
+    await $falcon.jsapi.storage.setItem({ key: 'token', value: '' })
+    await $falcon.jsapi.storage.setItem({ key: 'user', value: '' })
   } catch {}
 }
 
 export async function initAuth() {
   await loadToken()
   try {
-    const res = await $falcon.jsapi.storage.getStorage({ key: 'user' })
-    if (res.data) _user = JSON.parse(res.data)
+    // getItem 直接返回 string 值（不是 {data: string}）
+    const userStr: string = await $falcon.jsapi.storage.getItem({ key: 'user' })
+    if (userStr) _user = JSON.parse(userStr)
   } catch {}
 }

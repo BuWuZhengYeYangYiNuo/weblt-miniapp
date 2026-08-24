@@ -5,8 +5,9 @@ let _token: string = ''
 
 export async function loadToken() {
   try {
-    const res = await $falcon.jsapi.storage.getStorage({ key: 'token' })
-    _token = res.data || ''
+    // getItem 直接返回 string 值（不是 {data: string}），字段名是 key 不是 keys
+    const v = await $falcon.jsapi.storage.getItem({ key: 'token' })
+    _token = v || ''
   } catch {
     _token = ''
   }
@@ -25,15 +26,17 @@ async function request(path: string, options: { method?: string; data?: any } = 
 
   let res: any
   try {
-    res = await $falcon.jsapi.http.request({
+    // 文档明确：HTTP 请求入口是 $falcon.jsapi.net.request（不是 jsapi.http.request）
+    // 入参 data 应传对象（不是已 stringify 的字符串），headers 复数
+    res = await ($falcon as any).jsapi.net.request({
       url: `${API_BASE}/api${path}`,
-      method: (options.method || 'GET') as any,
+      method: options.method || 'GET',
       headers,
-      data: options.data ? JSON.stringify(options.data) : undefined,
+      data: options.data,  // 传对象，原生 libcurl/网络层会自己 JSON.stringify
       timeout: 10000,
     })
   } catch (err: any) {
-    // native http.request 抛错时通常是网络/DNS 失败（词典笔没网），带 message 让上层 toast 提示
+    // native net.request 抛错时通常是网络/DNS 失败（词典笔没网），带 message 让上层 toast 提示
     throw new Error(err?.message || '网络异常，请检查网络连接')
   }
 
@@ -42,12 +45,13 @@ async function request(path: string, options: { method?: string; data?: any } = 
     throw new Error('网络异常，请稍后重试')
   }
 
+  // 响应格式：原生层在 res.data 里塞 JSON 字符串，统一 parse
   let data = res.data
   if (typeof data === 'string') {
     try { data = JSON.parse(data) } catch {}
   }
 
-  // statusCode 为 0 或缺失通常意味着网络层失败
+  // statusCode：res.statusCode 是 number；为 0/缺失通常意味着网络层失败
   const sc = res.statusCode
   if (typeof sc !== 'number' || sc === 0) {
     throw new Error('网络异常，请检查网络连接')

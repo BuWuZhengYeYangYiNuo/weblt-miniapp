@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue'
 import { api } from '../../lib/api'
-import { saveAuth, initAuth } from '../../lib/store'
+import { saveAuth, initAuth, getToken, getUser } from '../../lib/store'
 
 export default defineComponent({
   data() {
@@ -21,10 +21,13 @@ export default defineComponent({
   // 页面生命周期：进入前台时由 BasePage 统一调度，必须定义在选项顶层
   async onShow() {
     await initAuth()
-    try {
-      await api.getMe()
+    // 仅当本地已有 token 和 user 时才自动跳到聊天页，避免与用户点登录的 handleSubmit 抢时序：
+    // 旧实现每次 onShow 都调 api.getMe()，如果 token 有效，await 完成瞬间会 navTo('page')
+    // 把用户跳走，此时用户刚点的 handleSubmit 还在 await api.login，登录结果被丢弃，用户感觉"没反应"。
+    // 现在改为：只在本地缓存有效（已登录）时才跳，否则停在登录页等用户输入。
+    if (getToken() && getUser()) {
       $falcon.navTo('page', {})
-    } catch {}
+    }
   },
 
   methods: {

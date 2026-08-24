@@ -33,9 +33,14 @@
       <text class="chat-announce-text">{{ announcement }}</text>
     </div>
 
-    <!-- 公共聊天 -->
+    <!-- 公共聊天：scroll-y 无值 + 完整 inline style 宽高 -->
     <div class="chat-content" v-if="activeTab === 'public'">
-      <scroller class="msg-scroller-public" scroll-y="true" :show-scrollbar="true" :style="{ height: contentHeight + 'px' }">
+      <scroller
+        class="msg-scroller-public"
+        scroll-y
+        show-scrollbar
+        :style="{ width: '100%', height: contentHeight + 'px' }"
+      >
         <div class="msg-list">
           <div v-for="msg in publicMessages" :key="msg.id" class="msg-item">
             <text class="msg-sender" :class="{ 'msg-sender-admin': msg.sender_role === 'admin' }">{{ senderLabel(msg) }}</text>
@@ -55,19 +60,32 @@
         <div class="sidebar-search" @click="openSearch">
           <text class="sidebar-search-text">搜索UID</text>
         </div>
-        <scroller class="sidebar-scroller" scroll-y="true" :style="{ height: sidebarHeight + 'px' }">
-          <div v-for="req in friendRequests" :key="req.id" class="sidebar-req">
+        <scroller
+          class="sidebar-scroller"
+          scroll-y
+          show-scrollbar
+          :style="{ width: '100px', height: sidebarHeight + 'px' }"
+        >
+          <!-- bubble="true" 阻止父级 scroller 吞 click/tap 事件 -->
+          <div v-for="req in friendRequests" :key="req.id" class="sidebar-req" bubble="true">
             <text class="sidebar-req-name">{{ req.nickname || req.username }}</text>
             <div class="sidebar-req-btns">
-              <div class="sidebar-req-accept" @click="handleRequest(req.request_id, 'accepted')">
+              <div class="sidebar-req-accept" @click="handleRequest(req.request_id, 'accepted')" bubble="true">
                 <text class="sidebar-req-btn-text">接</text>
               </div>
-              <div class="sidebar-req-reject" @click="handleRequest(req.request_id, 'rejected')">
+              <div class="sidebar-req-reject" @click="handleRequest(req.request_id, 'rejected')" bubble="true">
                 <text class="sidebar-req-btn-text">拒</text>
               </div>
             </div>
           </div>
-          <div v-for="f in friends" :key="f.id" class="sidebar-item" :class="selectedFriend && selectedFriend.id === f.id ? 'sidebar-item-active' : ''" @click="selectFriend(f)">
+          <div
+            v-for="f in friends"
+            :key="f.id"
+            class="sidebar-item"
+            :class="selectedFriend && selectedFriend.id === f.id ? 'sidebar-item-active' : ''"
+            @click="selectFriend(f)"
+            bubble="true"
+          >
             <text class="sidebar-name">{{ f.nickname || f.username }}</text>
           </div>
           <div v-if="friends.length === 0" class="sidebar-empty">
@@ -76,7 +94,12 @@
         </scroller>
       </div>
       <div class="chat-main" v-if="selectedFriend">
-        <scroller class="msg-scroller" scroll-y="true" :show-scrollbar="true" :style="{ height: contentHeight + 'px' }">
+        <scroller
+          class="msg-scroller"
+          scroll-y
+          show-scrollbar
+          :style="{ width: '540px', height: contentHeight + 'px' }"
+        >
           <div class="msg-list">
             <div v-for="msg in friendMessages" :key="msg.id" class="msg-item">
               <text class="msg-sender" :class="{ 'msg-sender-admin': msg.sender_role === 'admin' }">{{ senderLabel(msg) }}</text>
@@ -105,8 +128,20 @@
             <text class="sidebar-search-text">加入</text>
           </div>
         </div>
-        <scroller class="sidebar-scroller" scroll-y="true" :style="{ height: sidebarHeight + 'px' }">
-          <div v-for="g in groups" :key="g.id" class="sidebar-item" :class="selectedGroup && selectedGroup.id === g.id ? 'sidebar-item-active' : ''" @click="selectGroup(g)">
+        <scroller
+          class="sidebar-scroller"
+          scroll-y
+          show-scrollbar
+          :style="{ width: '100px', height: sidebarHeight + 'px' }"
+        >
+          <div
+            v-for="g in groups"
+            :key="g.id"
+            class="sidebar-item"
+            :class="selectedGroup && selectedGroup.id === g.id ? 'sidebar-item-active' : ''"
+            @click="selectGroup(g)"
+            bubble="true"
+          >
             <text class="sidebar-name">{{ g.name }}</text>
             <text class="sidebar-sub">{{ g.invite_code }}</text>
           </div>
@@ -123,7 +158,12 @@
             <text class="group-btn-text">{{ selectedGroup.role !== 'owner' ? '退出' : '解散' }}</text>
           </div>
         </div>
-        <scroller class="msg-scroller" scroll-y="true" :show-scrollbar="true" :style="{ height: (contentHeight - 24) + 'px' }">
+        <scroller
+          class="msg-scroller"
+          scroll-y
+          show-scrollbar
+          :style="{ width: '540px', height: (contentHeight - 24) + 'px' }"
+        >
           <div class="msg-list">
             <div v-for="msg in groupMessages" :key="msg.id" class="msg-item">
               <text class="msg-sender" :class="{ 'msg-sender-admin': msg.sender_role === 'admin' }">{{ senderLabel(msg) }}</text>

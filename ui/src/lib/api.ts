@@ -15,6 +15,10 @@ export async function loadToken() {
 export function getToken() { return _token }
 export function setToken(token: string) { _token = token }
 
+// 401 token 失效时回调（在 page.ts 中设置），由 BasePage 触发跳登录页
+let _onAuthFailed: ((err: Error) => void) | null = null
+export function setAuthFailedHandler(cb: (err: Error) => void) { _onAuthFailed = cb }
+
 async function request(path: string, options: { method?: string; data?: any } = {}): Promise<any> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (_token) headers['Authorization'] = `Bearer ${_token}`
@@ -49,7 +53,13 @@ async function request(path: string, options: { method?: string; data?: any } = 
     throw new Error('网络异常，请检查网络连接')
   }
   if (sc >= 400) {
-    throw new Error(data?.error || `请求失败 (${sc})`)
+    const errMsg = (data && typeof data === 'object' && data.error) || `请求失败 (${sc})`
+    // 401/403 token 失效：清本地凭证 + 回调跳登录页
+    if (sc === 401 || sc === 403) {
+      try { setToken('') } catch {}
+      if (_onAuthFailed) _onAuthFailed(new Error(errMsg))
+    }
+    throw new Error(errMsg)
   }
   return data
 }
@@ -93,25 +103,25 @@ export const api = {
     request('/friends/handle', { method: 'PUT', data: { requestId, action } }),
   getFriends: () => request('/friends/list'),
   getFriendRequests: () => request('/friends/requests'),
-  getUserByUid: (uid: string) => request(`/users/uid/${uid}`),
+  getUserByUid: (uid: string) => request(`/users/uid/${encodeURIComponent(uid)}`),
 
   // 群聊
   createGroup: (name: string) => request('/groups', { method: 'POST', data: { name } }),
-  joinGroup: (id: string) => request(`/groups/${id}/join`, { method: 'POST' }),
-  leaveGroup: (id: string) => request(`/groups/${id}/leave`, { method: 'POST' }),
-  disbandGroup: (id: string) => request(`/groups/${id}/disband`, { method: 'POST' }),
+  joinGroup: (id: string) => request(`/groups/${encodeURIComponent(id)}/join`, { method: 'POST' }),
+  leaveGroup: (id: string) => request(`/groups/${encodeURIComponent(id)}/leave`, { method: 'POST' }),
+  disbandGroup: (id: string) => request(`/groups/${encodeURIComponent(id)}/disband`, { method: 'POST' }),
   getMyGroups: () => request('/groups/mine'),
-  getGroupMembers: (id: string) => request(`/groups/${id}/members`),
+  getGroupMembers: (id: string) => request(`/groups/${encodeURIComponent(id)}/members`),
 
   // 消息
   sendPrivateMessage: (receiverId: string, content: string) =>
     request('/messages/private', { method: 'POST', data: { receiverId, content } }),
   getPrivateMessages: (userId: string, limit = 50) =>
-    request(`/messages/private/${userId}?limit=${limit}`),
+    request(`/messages/private/${encodeURIComponent(userId)}?limit=${limit}`),
   sendGroupMessage: (groupId: string, content: string) =>
-    request(`/messages/group/${groupId}`, { method: 'POST', data: { content } }),
+    request(`/messages/group/${encodeURIComponent(groupId)}`, { method: 'POST', data: { content } }),
   getGroupMessages: (groupId: string, limit = 50) =>
-    request(`/messages/group/${groupId}?limit=${limit}`),
+    request(`/messages/group/${encodeURIComponent(groupId)}?limit=${limit}`),
   sendPublicMessage: (content: string, permanent = false) =>
     request('/messages/public', { method: 'POST', data: { content, permanent } }),
   getPublicMessages: (limit = 50) =>

@@ -1,7 +1,7 @@
 import { defineComponent } from 'vue'
 import MessageItem from '../../components/MessageItem.vue'
 import Keyboard from '../../components/Keyboard.vue'
-import { api, showToast } from '../../lib/api'
+import { api, showToast, setAuthFailedHandler } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
 
 export default defineComponent({
@@ -130,6 +130,22 @@ export default defineComponent({
     }
     this.keyboardTarget = ''
     this.keyboardHeight = 0
+  },
+
+  // 注册全局 401/403 回调：token 失效时强制跳登录页（避免用户卡在 chat 页看到旧数据）
+  mounted() {
+    setAuthFailedHandler((err: Error) => {
+      // 已经在 index 页面时不重复跳
+      try {
+        showToast(err.message || '登录已过期，请重新登录')
+      } catch {}
+      // 异步清凭证 + 跳转，避免阻塞 mounted 自身
+      clearAuth().then(() => {
+        try { ($falcon as any).navTo('index', {}) } catch {}
+      }).catch(() => {
+        try { ($falcon as any).navTo('index', {}) } catch {}
+      })
+    })
   },
 
   methods: {

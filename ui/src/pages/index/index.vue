@@ -50,8 +50,9 @@
       </div>
     </scroller>
 
-    <!-- 登录按钮：fixed bottom 8px，z-index 250 永远位于键盘之上，键盘弹起时也可见 -->
-    <div class="login-btn" @click="handleSubmit">
+    <!-- 登录按钮：键盘不弹时显示，键盘弹起时隐藏（避免遮挡键盘底部的"确定"键），
+         键盘消失后按钮重新出现，用户点登录；这样既能保证按钮可见又不挡键盘 -->
+    <div v-if="!keyboardVisible" class="login-btn" @click="handleSubmit">
       <text class="login-btn-text">{{ isRegister ? '注册' : '登录' }}</text>
     </div>
 

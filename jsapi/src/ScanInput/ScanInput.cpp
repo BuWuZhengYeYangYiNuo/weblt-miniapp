@@ -29,6 +29,7 @@ void ScanInput::initialize(ScanInputCallback callback)
         [this, callback]()
         {
             std::string lastString = "";
+            bool firstRead = true;  // 首轮读到的值视为历史基线，不回传
             while (this->initialized)
             {
                 auto historyData = database.select("table_history")
@@ -41,7 +42,7 @@ void ScanInput::initialize(ScanInputCallback callback)
                     std::string currentString = historyData[0]["word"];
                     if (currentString != lastString)
                     {
-                        if (lastString != "")
+                        if (!firstRead)
                         {
                             system("miniapp_cli start 8001145142333001 softKeyboard");
                             callback(currentString);
@@ -49,6 +50,7 @@ void ScanInput::initialize(ScanInputCallback callback)
                         lastString = currentString;
                     }
                 }
+                firstRead = false;
                 sleep(1);
             }
         });

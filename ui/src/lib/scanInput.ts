@@ -40,8 +40,11 @@ export function onScanInput(callback: (text: string) => void): () => void {
   }
   wrapperMap.set(callback, wrapper)
   $falcon.on('scan_input', wrapper)
-  // 返回解绑函数，调用方在 onHide/onUnload 时使用
-  return () => offScanInput(callback)
+  // 返回解绑函数：解绑 JS 监听并停止原生轮询线程（避免后台误拉键盘）
+  return () => {
+    offScanInput(callback)
+    stopScanInput().catch(() => {})
+  }
 }
 
 export function offScanInput(callback: (text: string) => void): void {

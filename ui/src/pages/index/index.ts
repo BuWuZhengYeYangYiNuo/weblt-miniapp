@@ -1,7 +1,6 @@
 import { defineComponent } from 'vue'
 import { api } from '../../lib/api'
 import { saveAuth, initAuth } from '../../lib/store'
-import { startScanInput, onScanInput } from '../../lib/scanInput'
 
 export default defineComponent({
   data() {
@@ -15,47 +14,45 @@ export default defineComponent({
       statusText: '',
       loading: false,
       activeField: '' as string,
-      _scanUnbind: null as null | (() => void),
+      keyboardVisible: false,
     }
   },
 
   // 页面生命周期：进入前台时由 BasePage 统一调度，必须定义在选项顶层
   async onShow() {
     await initAuth()
-    this._scanUnbind = onScanInput(this.handleScanInput)
     try {
       await api.getMe()
       $falcon.navTo('page', {})
     } catch {}
   },
 
-  onHide() {
-    if (this._scanUnbind) {
-      this._scanUnbind()
-      this._scanUnbind = null
-    }
-  },
-
-  onUnload() {
-    if (this._scanUnbind) {
-      this._scanUnbind()
-      this._scanUnbind = null
-    }
-  },
-
   methods: {
-    // ScanInput 回传的输入文字：按当前聚焦字段回填
-    handleScanInput(text: string) {
-      if (this.activeField === 'username') this.username += text
-      else if (this.activeField === 'password') this.password += text
-      else if (this.activeField === 'email') this.email += text
-      else if (this.activeField === 'code') this.code += text
-    },
-
-    // 点击输入框：记录聚焦字段并拉起系统软键盘（原生 input 不会自动弹）
+    // 点击输入框：记录聚焦字段并弹出自绘键盘（系统输入法在此运行时不自动弹）
     focusField(field: string) {
       this.activeField = field
-      startScanInput()
+      this.keyboardVisible = true
+    },
+
+    closeKeyboard() {
+      this.keyboardVisible = false
+      this.activeField = ''
+    },
+
+    // 键盘上屏一个字符/汉字：回填到当前聚焦字段
+    onKeyboardInput(ch: string) {
+      if (this.activeField === 'username') this.username += ch
+      else if (this.activeField === 'password') this.password += ch
+      else if (this.activeField === 'email') this.email += ch
+      else if (this.activeField === 'code') this.code += ch
+    },
+
+    // 键盘退格：删除当前聚焦字段最后一个字符
+    onKeyboardBack() {
+      if (this.activeField === 'username') this.username = this.username.slice(0, -1)
+      else if (this.activeField === 'password') this.password = this.password.slice(0, -1)
+      else if (this.activeField === 'email') this.email = this.email.slice(0, -1)
+      else if (this.activeField === 'code') this.code = this.code.slice(0, -1)
     },
 
     toggleMode() {

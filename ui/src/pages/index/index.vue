@@ -45,6 +45,14 @@
         <text class="login-status-text">{{ statusText }}</text>
       </div>
     </div>
+
+    <!-- 自绘键盘：点击任意输入框后从底部弹出 -->
+    <Keyboard
+      v-if="keyboardVisible"
+      class="login-keyboard"
+      @input="onKeyboardInput"
+      @back="onKeyboardBack"
+    />
   </div>
 </template>
 
@@ -54,5 +62,11 @@
 
 <script>
 import index from './index';
-export default index;
+import Keyboard from '../../components/Keyboard.vue';
+export default {
+  ...index,
+  components: {
+    Keyboard,
+  },
+};
 </script>

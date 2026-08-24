@@ -1,18 +1,18 @@
 import { defineComponent } from 'vue'
 import MessageItem from '../../components/MessageItem.vue'
+import Keyboard from '../../components/Keyboard.vue'
 import { api, showToast } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
-import { startScanInput, onScanInput } from '../../lib/scanInput'
 
 export default defineComponent({
-  components: { MessageItem },
+  components: { MessageItem, Keyboard },
 
   data() {
     return {
       userInfo: getUser() || { id: '', uid: '', username: '', nickname: '', points: 0 },
       activeTab: 'public' as string,
       messageInput: '',
-      scanTarget: 'message' as 'message' | 'popup',
+      keyboardTarget: '' as 'message' | 'popup' | '',
 
       // 公共
       publicMessages: [] as any[],
@@ -44,9 +44,6 @@ export default defineComponent({
 
       // 轮询
       pollTimer: 0 as any,
-
-      // ScanInput 解绑函数（onShow 时由 onScanInput 返回）
-      _scanUnbind: null as null | (() => void),
     }
   },
 
@@ -78,7 +75,6 @@ export default defineComponent({
   async onShow() {
     await initAuth()
     this.userInfo = getUser() || this.userInfo
-    this._scanUnbind = onScanInput(this.handleScanInput)
     this.checkinPoints = this.userInfo.points || 0
 
     try {
@@ -107,10 +103,7 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
-    if (this._scanUnbind) {
-      this._scanUnbind()
-      this._scanUnbind = null
-    }
+    this.keyboardTarget = ''
   },
 
   onUnload() {
@@ -118,10 +111,7 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
-    if (this._scanUnbind) {
-      this._scanUnbind()
-      this._scanUnbind = null
-    }
+    this.keyboardTarget = ''
   },
 
   methods: {
@@ -135,24 +125,35 @@ export default defineComponent({
       }
     },
 
-    // ScanInput 回传文字：按当前聚焦目标回填
-    handleScanInput(text: string) {
-      if (this.scanTarget === 'popup') {
-        this.popupInput += text
-      } else {
-        this.messageInput += text
-      }
-    },
-
-    // 输入框聚焦：原生 input 不会自动弹系统输入法，显式拉起软键盘
+    // 输入框聚焦：原生 input 不会自动弹系统输入法，弹出自绘键盘
     focusMessageInput() {
-      this.scanTarget = 'message'
-      startScanInput()
+      this.keyboardTarget = 'message'
     },
 
     focusPopupInput() {
-      this.scanTarget = 'popup'
-      startScanInput()
+      this.keyboardTarget = 'popup'
+    },
+
+    closeKeyboard() {
+      this.keyboardTarget = ''
+    },
+
+    // 键盘上屏一个字符/汉字：回填到对应目标
+    onKeyboardInput(ch: string) {
+      if (this.keyboardTarget === 'popup') {
+        this.popupInput += ch
+      } else if (this.keyboardTarget === 'message') {
+        this.messageInput += ch
+      }
+    },
+
+    // 键盘退格：删除对应目标最后一个字符
+    onKeyboardBack() {
+      if (this.keyboardTarget === 'popup') {
+        this.popupInput = this.popupInput.slice(0, -1)
+      } else if (this.keyboardTarget === 'message') {
+        this.messageInput = this.messageInput.slice(0, -1)
+      }
     },
 
     switchTab(tab: string) {

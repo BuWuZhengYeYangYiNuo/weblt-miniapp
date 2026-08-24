@@ -1,0 +1,113 @@
+.kb-container {
+  width: 100%;
+  background-color: #0d1b2a;
+  display: flex;
+  flex-direction: column;
+}
+
+.kb-row {
+  display: flex;
+  flex-direction: row;
+  height: 28px;
+}
+
+.kb-key {
+  flex: 1;
+  height: 28px;
+  background-color: #16213e;
+  border-radius: 3px;
+  margin: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 拼音预览（候选栏上方独立一行）
+.kb-pinyin-bar {
+  height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #0a1422;
+  padding: 0 8px;
+}
+
+.kb-pinyin-text {
+  font-size: 18px;
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+// 中文候选栏
+.kb-candidate-bar {
+  height: 32px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: #16213e;
+  padding: 0 4px;
+}
+
+.kb-candidates {
+  flex: 1;
+  height: 32px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.kb-candidate {
+  height: 28px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f3460;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+.kb-candidate-text {
+  font-size: 16px;
+  color: #e0e0e0;
+}
+
+// 9 键数字键
+.kb-key-t9 {
+  flex: 1;
+  height: 28px;
+  background-color: #16213e;
+  border-radius: 3px;
+  margin: 1px;
+}
+
+.kb-label {
+  font-size: 15px;
+  color: #e0e0e0;
+  text-align: center;
+}
+
+.kb-key-shift {
+  flex: 1.5;
+  background-color: #0f3460;
+}
+
+.kb-key-back {
+  flex: 1.5;
+  background-color: #0f3460;
+}
+
+.kb-key-mode {
+  flex: 1.6;
+  background-color: #0f3460;
+}
+
+.kb-key-space {
+  flex: 4;
+  background-color: #1a1a2e;
+}
+
+.kb-key-enter {
+  flex: 1.6;
+  background-color: #3b82f6;
+}

@@ -32,14 +32,21 @@ type Falcon = {
             showLoading(params?: { message?: string }): void;
             hideLoading(): void;
         },
-        // 扫码/输入结果监听：启动后监听 `scan_input` 事件拿输入文字。
-        // 底层通过 `miniapp_cli start <appid> softKeyboard` 拉起系统软键盘，
-        // 输入结果写入 history.db，由本模块轮询回传。
-        // 注意：模块导出名为 ScanInput（大写 S）。
+        // 扫码模块（保留编译，前端当前未使用）。
         ScanInput: {
             initialize(): Promise<void>;
             deinitialize(): Promise<void>;
             showKeyboard(): Promise<void>;
+        },
+        // 本地拼音输入法引擎（IME）：自绘键盘调用它做拼音→汉字转换，
+        // 不依赖系统输入法，词库在构建时由 rawdict_utf16_65105_freq.txt 生成。
+        IME: {
+            initialize(): Promise<void>;
+            // 同步方法（运行时不保证包装为 Promise，前端用 await 兼容）。
+            // 返回候选数组：[{ hanZi: string, freq: number, pinyin: string[] }]
+            getCandidates(rawPinyin: string): any;
+            updateWordFrequency(pinyin: string[], hanZi: string): any;
+            splitPinyin(rawPinyin: string): any;
         }
     },
     closeApp: () => void,

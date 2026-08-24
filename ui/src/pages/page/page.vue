@@ -183,6 +183,14 @@
         </div>
       </div>
     </div>
+
+    <!-- 自绘键盘：聚焦消息输入框或弹窗输入框后从底部弹出 -->
+    <Keyboard
+      v-if="keyboardTarget"
+      class="chat-keyboard"
+      @input="onKeyboardInput"
+      @back="onKeyboardBack"
+    />
   </div>
 </template>
 

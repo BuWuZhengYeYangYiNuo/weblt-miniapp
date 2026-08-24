@@ -31,7 +31,7 @@ using namespace JQUTIL_NS;
 static std::vector<std::string> exportList = {
     // Uncomment module names below when enabling their exports.
     // "AI",
-    // "IME",
+    "IME",
     "ScanInput",
 };
 
@@ -40,7 +40,7 @@ static int module_init(JSContext *ctx, JSModuleDef *m)
     auto env = JQUTIL_NS::JQModuleEnv::CreateModule(ctx, m, "custom");
 
     // env->setModuleExport("AI", createAI(env.get()));
-    // env->setModuleExport("IME", createIME(env.get()));
+    env->setModuleExport("IME", createIME(env.get()));
     env->setModuleExport("ScanInput", createScanInput(env.get()));
 
     // Add your own module exports here, e.g.:

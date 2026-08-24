@@ -45,12 +45,6 @@ export default defineComponent({
       this.keyboardVisible = true
     },
 
-    closeKeyboard() {
-      this.keyboardVisible = false
-      this.activeField = ''
-      this.keyboardHeight = 0
-    },
-
     // 键盘上屏一个字符/汉字：回填到当前聚焦字段
     onKeyboardInput(ch: string) {
       if (this.activeField === 'username') this.username += ch
@@ -74,9 +68,17 @@ export default defineComponent({
       this.keyboardHeight = 0
     },
 
-    // 键盘 layout/mode 变化时 emit 当前高度，让登录按钮上移避免被键盘遮挡
+    // 键盘 layout/mode 变化时 emit 当前高度，预留备用
     onKeyboardHeight(h: number) {
-      this.keyboardHeight = h || 0
+      // 兜底：负数或 NaN 视为 0，避免 input-bar marginBottom 出现负值
+      this.keyboardHeight = Math.max(0, h || 0)
+    },
+
+    // 强制关闭键盘并清聚焦（用于切登录/注册模式 / 用户切外部场景）
+    closeKeyboard() {
+      this.keyboardVisible = false
+      this.activeField = ''
+      this.keyboardHeight = 0
     },
 
     toggleMode() {
@@ -84,9 +86,12 @@ export default defineComponent({
       this.statusText = ''
       this.code = ''
       this.codeSent = false
+      // 切登录/注册模式时收起键盘，避免键盘状态跨模式残留
+      this.closeKeyboard()
     },
 
     async sendCode() {
+      if (this.loading) return  // 防重复点击
       if (!this.email) { this.statusText = '请先输入邮箱'; showToast('请先输入邮箱'); return }
       if (this.codeSent) return
       this.loading = true
@@ -104,6 +109,7 @@ export default defineComponent({
     },
 
     async handleSubmit() {
+      if (this.loading) return  // 防重复点击：loading 期间禁止二次点击
       if (!this.username || !this.password) {
         this.statusText = '请填写用户名和密码'
         showToast('请填写用户名和密码')
@@ -135,10 +141,16 @@ export default defineComponent({
           showToast('登录成功')
         }
         this.statusText = ''
+        // 登录成功后必须清键盘状态，避免 keyboardVisible=true 跳到 chat 页后状态泄漏，
+        // 下次回到 index 页时键盘仍弹着
+        this.closeKeyboard()
         $falcon.navTo('page', {})
       } catch (err: any) {
         this.statusText = err.message || '操作失败'
         showToast(err.message || '操作失败')
+        // 登录失败时也清键盘状态，让用户看到错误提示（statusText 在 scroller 内），
+        // 避免键盘挡住登录按钮导致用户无法重试
+        this.closeKeyboard()
       } finally {
         this.loading = false
       }

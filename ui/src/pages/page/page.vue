@@ -154,7 +154,7 @@
         <div class="group-header">
           <text class="group-header-name">{{ selectedGroup.name }}</text>
           <text class="group-header-code">群号:{{ selectedGroup.invite_code }}</text>
-          <div class="group-header-btn" :class="selectedGroup.role !== 'owner' ? 'group-btn-leave' : 'group-btn-disband'" @click="selectedGroup.role !== 'owner' ? leaveGroup() : disbandGroup()">
+          <div class="group-header-btn" :class="selectedGroup.role !== 'owner' ? 'group-btn-leave' : 'group-btn-disband'" @click="handleGroupLeaveOrDisband">
             <text class="group-btn-text">{{ selectedGroup.role !== 'owner' ? '退出' : '解散' }}</text>
           </div>
         </div>
@@ -202,8 +202,10 @@
       </div>
     </div>
 
-    <!-- 输入栏：div 替代原生 input，避免 v-model 与自绘键盘字符不同步的问题 -->
-    <div class="chat-input-bar" :style="{ marginBottom: keyboardHeight + 'px' }">
+    <!-- 输入栏：div 替代原生 input，避免 v-model 与自绘键盘字符不同步的问题。
+         fixed bottom + z-index 150 让键盘弹起时仍可见，
+         :style bottom=keyboardHeight 让输入栏顶到键盘上方不被遮挡 -->
+    <div class="chat-input-bar" :style="{ bottom: keyboardHeight + 'px' }">
       <div class="chat-input-field" @click="focusMessageInput">
         <text class="chat-input-text" v-if="messageInput">{{ messageInput }}</text>
         <text class="chat-input-placeholder" v-else>输入消息...</text>
@@ -237,6 +239,7 @@
       class="chat-keyboard"
       @input="onKeyboardInput"
       @back="onKeyboardBack"
+      @enter="onKeyboardEnter"
       @confirm="onKeyboardConfirm"
       @height="onKeyboardHeight"
     />

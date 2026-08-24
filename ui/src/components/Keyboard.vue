@@ -6,7 +6,7 @@
     </div>
     <!-- 候选栏（横向滚动），仅中文模式显示 -->
     <div class="kb-candidate-bar" v-if="showCandidates">
-      <scroller class="kb-candidates" scroll-direction="horizontal" :show-scrollbar="false">
+      <scroller class="kb-candidates" scroll-direction="horizontal" :show-scrollbar="false" bubble="true">
         <div
           v-for="(ch, i) in candidates"
           :key="i"

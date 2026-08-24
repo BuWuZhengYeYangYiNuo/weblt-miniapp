@@ -214,7 +214,9 @@ export default defineComponent({
       // 等 IME 初始化完成再取候选，避免 getCandidates 早于 initialize 调用导致抛错
       await ensureIME()
       try {
-        const res = await ($falcon as any).jsapi.IME.getCandidates(py)
+        // IME.getCandidates 是同步函数（JQFunctionInfo），直接返回 Bson 数组，
+        // 不要 await（await 非 Promise 在某些 quickjs 实现里可能抛错）
+        const res = ($falcon as any).jsapi.IME.getCandidates(py)
         // 返回 [{hanZi, freq, pinyin:[...]}] 或字符串数组，统一抽取 hanZi
         if (Array.isArray(res)) {
           this.candidates = res.map((c: any) => (typeof c === 'string' ? c : c.hanZi)).filter(Boolean)

@@ -46,6 +46,8 @@ export default defineComponent({
       pollTimer: 0 as any,
       // 当前键盘高度（Keyboard 组件 emit 'height' 更新），用于把 chat-input-bar 顶到键盘上方
       keyboardHeight: 0,
+      // 发送消息期间的单次锁，防止用户连点导致重复发送
+      _sendLock: false,
     }
   },
 
@@ -143,6 +145,10 @@ export default defineComponent({
 
     // 输入框聚焦：原生 input 不会自动弹系统输入法，弹出自绘键盘
     focusMessageInput() {
+      // 优先关闭弹窗，避免 popup 与 message 输入键盘冲突
+      if (this.popupVisible) {
+        this.closePopup()
+      }
       this.keyboardTarget = 'message'
     },
 
@@ -174,6 +180,15 @@ export default defineComponent({
       }
     },
 
+    // 键盘回车：消息输入时直接发送消息，弹窗输入时确认弹窗
+    onKeyboardEnter() {
+      if (this.keyboardTarget === 'popup' && this.popupVisible) {
+        this.confirmPopup()
+      } else if (this.keyboardTarget === 'message') {
+        this.sendMessage()
+      }
+    },
+
     // 键盘「确定」：收起自绘键盘
     onKeyboardConfirm() {
       this.keyboardTarget = ''
@@ -182,12 +197,15 @@ export default defineComponent({
 
     // 键盘高度变化（来自 Keyboard 组件 emit 'height'）：用于把输入栏顶到键盘上方
     onKeyboardHeight(h: number) {
-      this.keyboardHeight = h
+      // 兜底：负数 / NaN 视为 0，避免 input-bar marginBottom 出现负值
+      this.keyboardHeight = Math.max(0, h || 0)
     },
 
     switchTab(tab: string) {
-      // 切 tab 时关闭自绘键盘（避免键盘一直浮在屏上挡内容）
+      // 切 tab 时关闭自绘键盘并清 keyboardHeight，避免键盘一直浮在屏上挡内容，
+      // 同时 input-bar marginBottom 残留导致 input-bar 被永久顶起
       this.keyboardTarget = ''
+      this.keyboardHeight = 0
       this.activeTab = tab
     },
 
@@ -259,6 +277,8 @@ export default defineComponent({
     selectFriend(f: any) {
       this.selectedFriend = f
       this.selectedGroup = null
+      // 立即清空旧消息，避免新好友加载完前显示上一好友的消息造成视觉混淆
+      this.friendMessages = []
       this.loadFriendMessages()
     },
 
@@ -295,6 +315,8 @@ export default defineComponent({
     selectGroup(g: any) {
       this.selectedGroup = g
       this.selectedFriend = null
+      // 立即清空旧消息，避免新群加载完前显示上一群的消息造成视觉混淆
+      this.groupMessages = []
       this.loadGroupMessages()
     },
 
@@ -321,6 +343,16 @@ export default defineComponent({
         await this.loadGroups()
       } catch (err: any) {
         showToast(err.message)
+      }
+    },
+
+    // 群组 header 按钮：根据 role 调 leave/disband（避免 @click 表达式在 precompiler 中行为不确定）
+    handleGroupLeaveOrDisband() {
+      if (!this.selectedGroup) return
+      if (this.selectedGroup.role !== 'owner') {
+        this.leaveGroup()
+      } else {
+        this.disbandGroup()
       }
     },
 
@@ -414,27 +446,39 @@ export default defineComponent({
 
     // 发送消息
     async sendMessage() {
+      // 防重复点击：loading 期间禁止二次点击（onSendLock 仅作单次发送内锁，不污染其他方法）
+      if (this._sendLock) return
       const content = this.messageInput.trim()
       if (!content) {
         showToast('消息不能为空')
         return
       }
-
+      this._sendLock = true
       try {
         if (this.activeTab === 'public') {
           await api.sendPublicMessage(content, false)
           await this.loadPublicMessages()
+          this.messageInput = ''
+          showToast('已发送')
         } else if (this.activeTab === 'friends' && this.selectedFriend) {
           await api.sendPrivateMessage(this.selectedFriend.id, content)
           await this.loadFriendMessages()
+          this.messageInput = ''
+          showToast('已发送')
         } else if (this.activeTab === 'groups' && this.selectedGroup) {
           await api.sendGroupMessage(this.selectedGroup.id, content)
           await this.loadGroupMessages()
+          this.messageInput = ''
+          showToast('已发送')
+        } else {
+          // activeTab 与 selectedXxx 不匹配时（如 public tab 但代码误入 else 分支、
+          // 好友 tab 未选好友、群聊 tab 未选群）提示用户，保留输入不丢失
+          showToast('请先选择聊天对象')
         }
-        this.messageInput = ''
-        showToast('已发送')
       } catch (err: any) {
         showToast(err.message || '发送失败')
+      } finally {
+        this._sendLock = false
       }
     },
 

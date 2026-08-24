@@ -1,5 +1,5 @@
 import { defineComponent } from 'vue'
-import { api } from '../../lib/api'
+import { api, showToast } from '../../lib/api'
 import { saveAuth, initAuth, getToken, getUser } from '../../lib/store'
 
 export default defineComponent({
@@ -72,15 +72,17 @@ export default defineComponent({
     },
 
     async sendCode() {
-      if (!this.email) { this.statusText = '请先输入邮箱'; return }
+      if (!this.email) { this.statusText = '请先输入邮箱'; showToast('请先输入邮箱'); return }
       if (this.codeSent) return
       this.loading = true
       try {
         await api.sendCode(this.email)
         this.codeSent = true
         this.statusText = '验证码已发送'
+        showToast('验证码已发送')
       } catch (err: any) {
         this.statusText = err.message
+        showToast(err.message || '发送失败')
       } finally {
         this.loading = false
       }
@@ -89,31 +91,39 @@ export default defineComponent({
     async handleSubmit() {
       if (!this.username || !this.password) {
         this.statusText = '请填写用户名和密码'
+        showToast('请填写用户名和密码')
         return
       }
 
       if (this.isRegister) {
         if (!this.email || !this.code) {
           this.statusText = '请填写所有字段'
+          showToast('请填写所有字段')
           return
         }
       }
 
       this.loading = true
       this.statusText = this.isRegister ? '注册中...' : '登录中...'
+      showToast(this.isRegister ? '注册中...' : '登录中...')
 
       try {
         if (this.isRegister) {
           const data = await api.register(this.username, this.password, this.email, this.code)
           await saveAuth(data.token, data.user)
+          this.statusText = '注册成功'
+          showToast('注册成功')
         } else {
           const data = await api.login(this.username, this.password)
           await saveAuth(data.token, data.user)
+          this.statusText = '登录成功'
+          showToast('登录成功')
         }
         this.statusText = ''
         $falcon.navTo('page', {})
       } catch (err: any) {
-        this.statusText = err.message
+        this.statusText = err.message || '操作失败'
+        showToast(err.message || '操作失败')
       } finally {
         this.loading = false
       }

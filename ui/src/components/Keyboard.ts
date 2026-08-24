@@ -42,6 +42,8 @@ export default defineComponent({
       layout: 'qwerty' as 'qwerty' | 't9',
       // 中文拼音缓冲（已拼好的拼音串，例如 "ni"）
       pinyin: '',
+      // 英文/数字/符号模式：最近输入的字符缓冲（用于 input preview bar 显示）
+      inputBuffer: '' as string,
       // 9 键点击状态：上一次按的数字键 与 该键已点次数
       t9LastDigit: '' as string,
       t9TapCount: 0,
@@ -70,6 +72,13 @@ export default defineComponent({
     // 是否显示候选栏（仅中文模式）
     showCandidates(): boolean {
       return this.mode === 'chinese'
+    },
+
+    // 键盘上方 input preview bar 显示内容：
+    // 中文模式显示当前拼音（pinyin），其他模式显示最近输入的字符缓冲
+    inputPreview(): string {
+      if (this.mode === 'chinese') return this.pinyin || ' '
+      return this.inputBuffer || ' '
     },
 
     currentRows(): KbKey[][] {
@@ -202,6 +211,8 @@ export default defineComponent({
         this.candidates = []
         return
       }
+      // 等 IME 初始化完成再取候选，避免 getCandidates 早于 initialize 调用导致抛错
+      await ensureIME()
       try {
         const res = await ($falcon as any).jsapi.IME.getCandidates(py)
         // 返回 [{hanZi, freq, pinyin:[...]}] 或字符串数组，统一抽取 hanZi
@@ -252,6 +263,8 @@ export default defineComponent({
 
     onKeyTap(key: KbKey) {
       if (key.action === 'input') {
+        // 英文/数字/符号模式：直接上屏 + 同步更新 inputBuffer（用于 input preview bar 显示）
+        this.inputBuffer = (this.inputBuffer + key.value).slice(-12)
         this.$emit('input', key.value)
       } else if (key.action === 'back') {
         this.onBack()
@@ -274,7 +287,9 @@ export default defineComponent({
       } else if (key.action === 'space') {
         this.onSpace()
       } else if (key.action === 'pinyin') {
+        // 中文模式点字母：追加到拼音缓冲 + 同步更新 inputBuffer（让 input preview bar 立即显示）
         this.pinyin += key.value.toLowerCase()
+        this.inputBuffer = (this.inputBuffer + key.value.toLowerCase()).slice(-12)
         this.refreshCandidates()
       } else if (key.action === 't9') {
         this.onT9Tap(key.value)
@@ -291,20 +306,26 @@ export default defineComponent({
       this.t9LastDigit = ''
       this.t9TapCount = 0
       this.candidates = []
+      // 切模式/清拼音时也清 inputBuffer（让 preview bar 同步）
+      this.inputBuffer = ''
     },
 
     onBack() {
       if (this.mode === 'chinese') {
         if (this.pinyin) {
           this.pinyin = this.pinyin.slice(0, -1)
+          this.inputBuffer = this.inputBuffer.slice(0, -1)
           this.t9LastDigit = ''
           this.t9TapCount = 0
           this.refreshCandidates()
           return
         }
+        this.inputBuffer = this.inputBuffer.slice(0, -1)
         this.$emit('back')
         return
       }
+      // 英文/数字/符号模式：退格并同步清 inputBuffer
+      this.inputBuffer = this.inputBuffer.slice(0, -1)
       this.$emit('back')
     },
 
@@ -321,23 +342,24 @@ export default defineComponent({
       this.$emit('enter')
     },
 
-    // 空格：中文模式上屏首个候选
+    // 空格：英文/数字模式直接上屏空格并更新 inputBuffer；中文模式上屏首个候选
     onSpace() {
       if (this.mode === 'chinese' && this.candidates.length > 0) {
         this.commitCandidate(this.candidates[0])
         return
       }
+      this.inputBuffer = (this.inputBuffer + ' ').slice(-12)
       this.$emit('input', ' ')
     },
 
     // 同步键盘内容高度并通知父页面（中文模式含拼音预览行 + 候选栏）
     syncHeight() {
       if (this.mode === 'chinese') {
-        // 拼音预览行(28) + 候选栏(32) + 字母行 + 底部 [空格][确定] 行(28)
-        this.kbHeight = (this.layout === 't9' ? 2 : 3) * 28 + 60 + 28
+        // input preview(28) + 候选栏(32) + 字母行 + 底部 [空格][确定] 行(28)
+        this.kbHeight = (this.layout === 't9' ? 2 : 3) * 28 + 28 + 32 + 28
       } else {
-        // 普通 3 行 + 底部 [空格][确定] 行(28)
-        this.kbHeight = 3 * 28 + 28
+        // input preview(28) + 普通 3 行 + 底部 [空格][确定] 行(28)
+        this.kbHeight = 3 * 28 + 28 + 28
       }
       this.$emit('height', this.kbHeight)
     },

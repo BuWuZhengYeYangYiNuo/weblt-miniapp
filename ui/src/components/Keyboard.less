@@ -27,7 +27,7 @@
   justify-content: center;
 }
 
-// 拼音预览（候选栏上方独立一行）
+// 拼音预览 / 输入预览（候选栏上方独立一行；所有模式都显示）
 .kb-pinyin-bar {
   height: 28px;
   display: flex;
@@ -121,4 +121,22 @@
 .kb-key-confirm {
   flex: 2;
   background-color: #3b82f6;
+}
+
+// 按下反馈：所有键盘按键按压时短暂变白
+.kb-key:active,
+.kb-key-t9:active,
+.kb-key-shift:active,
+.kb-key-back:active,
+.kb-key-mode:active,
+.kb-key-space:active,
+.kb-key-enter:active,
+.kb-key-confirm:active,
+.kb-candidate:active {
+  background-color: #ffffff;
+}
+.kb-key-confirm:active,
+.kb-key-enter:active {
+  // 蓝色键按压时变浅蓝保留色相
+  background-color: #93c5fd;
 }

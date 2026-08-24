@@ -1,10 +1,10 @@
 <template>
   <div class="kb-container">
-    <!-- 中文模式：拼音预览（独立一行，显示在候选栏上方） -->
-    <div class="kb-pinyin-bar" v-if="showCandidates">
-      <text class="kb-pinyin-text">{{ pinyin || ' ' }}</text>
+    <!-- 顶部 input preview bar：所有模式都显示，中文显示拼音，其他模式显示最近输入字符 -->
+    <div class="kb-pinyin-bar">
+      <text class="kb-pinyin-text">{{ inputPreview }}</text>
     </div>
-    <!-- 候选栏（横向滚动） -->
+    <!-- 候选栏（横向滚动），仅中文模式显示 -->
     <div class="kb-candidate-bar" v-if="showCandidates">
       <scroller class="kb-candidates" scroll-direction="horizontal" :show-scrollbar="false">
         <div

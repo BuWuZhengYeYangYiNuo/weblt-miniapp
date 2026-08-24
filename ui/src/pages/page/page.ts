@@ -381,7 +381,10 @@ export default defineComponent({
     // 发送消息
     async sendMessage() {
       const content = this.messageInput.trim()
-      if (!content) return
+      if (!content) {
+        showToast('消息不能为空')
+        return
+      }
 
       try {
         if (this.activeTab === 'public') {
@@ -395,14 +398,16 @@ export default defineComponent({
           await this.loadGroupMessages()
         }
         this.messageInput = ''
+        showToast('已发送')
       } catch (err: any) {
-        showToast(err.message)
+        showToast(err.message || '发送失败')
       }
     },
 
     // 退出
     async doLogout() {
       await clearAuth()
+      showToast('已退出登录')
       $falcon.navTo('index', {})
     },
   },

@@ -333,12 +333,24 @@ export default defineComponent({
     // 同步键盘内容高度并通知父页面（中文模式含拼音预览行 + 候选栏）
     syncHeight() {
       if (this.mode === 'chinese') {
-        // 拼音预览行(28) + 候选栏(32) + 字母行
-        this.kbHeight = (this.layout === 't9' ? 2 : 3) * 28 + 60
+        // 拼音预览行(28) + 候选栏(32) + 字母行 + 底部 [空格][确定] 行(28)
+        this.kbHeight = (this.layout === 't9' ? 2 : 3) * 28 + 60 + 28
       } else {
-        this.kbHeight = 3 * 28
+        // 普通 3 行 + 底部 [空格][确定] 行(28)
+        this.kbHeight = 3 * 28 + 28
       }
       this.$emit('height', this.kbHeight)
+    },
+
+    // 底部固定行的「空格」：复用 onSpace 语义
+    onSpaceTap() {
+      this.onSpace()
+    },
+
+    // 底部固定行的「确定」：清空拼音缓冲，发出 confirm 让父页面关闭键盘
+    onConfirmTap() {
+      this.clearPinyin()
+      this.$emit('confirm')
     },
   },
 })

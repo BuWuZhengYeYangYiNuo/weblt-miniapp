@@ -29,6 +29,16 @@
         <text class="kb-label">{{ key.display }}</text>
       </div>
     </div>
+
+    <!-- 底部固定行：空格 + 确定 -->
+    <div class="kb-row">
+      <div class="kb-key kb-key-space" @click="onSpaceTap">
+        <text class="kb-label">空格</text>
+      </div>
+      <div class="kb-key kb-key-confirm" @click="onConfirmTap">
+        <text class="kb-label">确定</text>
+      </div>
+    </div>
   </div>
 </template>
 

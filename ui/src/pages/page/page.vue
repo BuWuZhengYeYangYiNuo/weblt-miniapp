@@ -159,7 +159,7 @@
     </div>
 
     <!-- 输入栏：原生 input，聚焦时系统自动弹输入法 -->
-    <div class="chat-input-bar">
+    <div class="chat-input-bar" :style="{ marginBottom: keyboardHeight + 'px' }">
       <input class="chat-input-field" type="text" placeholder="输入消息..." v-model="messageInput" @focus="focusMessageInput" />
       <div class="chat-send-btn" @click="sendMessage">
         <text class="chat-send-text">发送</text>
@@ -190,6 +190,8 @@
       class="chat-keyboard"
       @input="onKeyboardInput"
       @back="onKeyboardBack"
+      @confirm="onKeyboardConfirm"
+      @height="onKeyboardHeight"
     />
   </div>
 </template>

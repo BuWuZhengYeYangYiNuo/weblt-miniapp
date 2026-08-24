@@ -55,6 +55,12 @@ export default defineComponent({
       else if (this.activeField === 'code') this.code = this.code.slice(0, -1)
     },
 
+    // 键盘「确定」：收起自绘键盘并清空聚焦字段
+    onKeyboardConfirm() {
+      this.keyboardVisible = false
+      this.activeField = ''
+    },
+
     toggleMode() {
       this.isRegister = !this.isRegister
       this.statusText = ''

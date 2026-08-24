@@ -1,8 +1,13 @@
+// 自绘键盘容器：固定贴底，浮在所有页面元素（含 popup）之上
 .kb-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
   width: 100%;
   background-color: #0d1b2a;
   display: flex;
   flex-direction: column;
+  z-index: 200;
 }
 
 .kb-row {
@@ -109,5 +114,11 @@
 
 .kb-key-enter {
   flex: 1.6;
+  background-color: #3b82f6;
+}
+
+// 底部 [空格][确定] 行专用键
+.kb-key-confirm {
+  flex: 2;
   background-color: #3b82f6;
 }

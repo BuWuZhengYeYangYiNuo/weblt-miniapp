@@ -44,6 +44,8 @@ export default defineComponent({
 
       // 轮询
       pollTimer: 0 as any,
+      // 当前键盘高度（Keyboard 组件 emit 'height' 更新），用于把 chat-input-bar 顶到键盘上方
+      keyboardHeight: 0,
     }
   },
 
@@ -154,6 +156,16 @@ export default defineComponent({
       } else if (this.keyboardTarget === 'message') {
         this.messageInput = this.messageInput.slice(0, -1)
       }
+    },
+
+    // 键盘「确定」：收起自绘键盘
+    onKeyboardConfirm() {
+      this.keyboardTarget = ''
+    },
+
+    // 键盘高度变化（来自 Keyboard 组件 emit 'height'）：用于把输入栏顶到键盘上方
+    onKeyboardHeight(h: number) {
+      this.keyboardHeight = h
     },
 
     switchTab(tab: string) {

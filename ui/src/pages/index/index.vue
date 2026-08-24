@@ -52,6 +52,7 @@
       class="login-keyboard"
       @input="onKeyboardInput"
       @back="onKeyboardBack"
+      @confirm="onKeyboardConfirm"
     />
   </div>
 </template>

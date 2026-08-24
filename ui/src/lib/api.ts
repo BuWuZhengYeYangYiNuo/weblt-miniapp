@@ -54,8 +54,14 @@ async function request(path: string, options: { method?: string; data?: any } = 
   return data
 }
 
-// 简易Toast提示
+// 错误/提示浮层：
+// 1. 触发 app:toast 全局事件，由 BasePage 转发给当前页面的 <ErrorBanner ref="errorBanner">，
+//    在屏幕顶部居中显示（词典笔 260px 屏小，原生 showToast 在底部看不见）。
+// 2. 同时保留 native $falcon.jsapi.ui.showToast 兜底（如 banner 还没挂载时仍能提示）。
 export function showToast(msg: string) {
+  try {
+    ($falcon as any).trigger('app:toast', { msg })
+  } catch {}
   try {
     if ($falcon?.jsapi?.ui?.showToast) {
       ($falcon as any).jsapi.ui.showToast({ message: msg })

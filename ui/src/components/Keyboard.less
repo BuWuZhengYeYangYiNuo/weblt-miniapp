@@ -84,6 +84,10 @@
   background-color: #16213e;
   border-radius: 3px;
   margin: 1px;
+  // 必须加 flex 让内部 <text> 居中显示（less 不自动继承）
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .kb-label {

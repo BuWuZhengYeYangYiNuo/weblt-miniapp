@@ -423,6 +423,9 @@ export default defineComponent({
           this.searchResult = result
           this.showSearch = false
           this.popupInput = ''
+          // 切到搜索结果弹窗时关闭 popup 键盘（搜索结果弹窗没输入框）
+          this.keyboardTarget = ''
+          this.keyboardHeight = 0
         } catch (err: any) {
           showToast(err.message)
         }
@@ -431,6 +434,9 @@ export default defineComponent({
 
     closeSearchResult() {
       this.searchResult = null
+      // 搜索结果弹窗关闭时清掉残留的 popup 键盘状态
+      this.keyboardTarget = ''
+      this.keyboardHeight = 0
     },
 
     async addFriend() {
@@ -438,7 +444,8 @@ export default defineComponent({
       try {
         await api.sendFriendRequest(this.searchResult.id)
         showToast('好友申请已发送')
-        this.searchResult = null
+        // 调 closeSearchResult 让键盘也清掉
+        this.closeSearchResult()
       } catch (err: any) {
         showToast(err.message)
       }

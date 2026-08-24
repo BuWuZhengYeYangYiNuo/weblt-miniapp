@@ -64,6 +64,10 @@
       @back="onKeyboardBack"
       @confirm="onKeyboardConfirm"
     />
+
+    <!-- 置顶居中错误提示 banner：词典笔屏小，原生 toast 在底部看不见。
+         通过 $falcon.trigger('app:toast', {msg}) 全局事件由 BasePage 转发到此组件。 -->
+    <ErrorBanner ref="errorBanner" />
   </div>
 </template>
 
@@ -74,10 +78,12 @@
 <script>
 import index from './index';
 import Keyboard from '../../components/Keyboard.vue';
+import ErrorBanner from '../../components/ErrorBanner.vue';
 export default {
   ...index,
   components: {
     Keyboard,
+    ErrorBanner,
   },
 };
 </script>

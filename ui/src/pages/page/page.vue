@@ -182,8 +182,8 @@
     </div>
 
     <!-- 搜索/创建群 弹窗：popup-input 也改用 div 避免 v-model 不同步
-         键盘弹起时 popup 贴顶，避免被 fixed bottom 0 的键盘盖住 -->
-    <div class="chat-popup" :class="keyboardHeight > 0 ? 'chat-popup-kb' : ''" v-if="popupVisible">
+         键盘弹起时 popup 贴顶，padding-top=keyboardHeight+4 留出键盘高度避免被键盘盖住 -->
+    <div class="chat-popup" :class="keyboardHeight > 0 ? 'chat-popup-kb' : ''" v-if="popupVisible" :style="keyboardHeight > 0 ? { paddingTop: (keyboardHeight + 4) + 'px' } : {}">
       <div class="popup-mask" @click="closePopup"></div>
       <div class="popup-box">
         <text class="popup-title">{{ popupTitle }}</text>
@@ -243,6 +243,9 @@
       @confirm="onKeyboardConfirm"
       @height="onKeyboardHeight"
     />
+
+    <!-- 置顶居中错误提示 banner：词典笔屏小，原生 toast 在底部看不见 -->
+    <ErrorBanner ref="errorBanner" />
   </div>
 </template>
 
@@ -252,5 +255,11 @@
 
 <script>
 import page from './page';
-export default page;
+import ErrorBanner from '../../components/ErrorBanner.vue';
+export default {
+  ...page,
+  components: {
+    ErrorBanner,
+  },
+};
 </script>

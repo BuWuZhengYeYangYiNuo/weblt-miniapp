@@ -1,0 +1,40 @@
+// 置顶居中错误提示 banner：词典笔 260px 屏小，原生 showToast 默认在底部，看不见。
+// 自实现 fixed top 居中浮层，2.5s 自动消失，点击立即取消。
+.error-banner-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  // banner 距屏顶 20px（屏小不遮挡 header 太多）
+  padding-top: 20px;
+  // 点击下方空白处不穿透：实际只在 banner 上点击触发 dismiss，
+  // 这里不阻止冒泡，让外部点击继续响应
+  pointer-events: none;
+}
+
+.error-banner {
+  // 半透明深色背景 + 浅色边框，高 z-index 醒目
+  background-color: rgba(239, 68, 68, 0.95);
+  border-radius: 6px;
+  padding: 10px 16px;
+  max-width: 90%;
+  // banner 自身允许点击
+  pointer-events: auto;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.error-banner-text {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+  // 多行自动换行
+  lines: 1;
+  text-overflow: ellipsis;
+}

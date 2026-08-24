@@ -129,6 +129,19 @@ export class BasePage extends PageRes {
   onLoad(options) {
     super.onLoad(options)
     this.options = options
+    // 注册全局 toast 事件监听：api.ts 的 showToast 会 $falcon.trigger('app:toast', { msg })，
+    // 这里转发给当前页面的 ErrorBanner 组件（ref="errorBanner"）做置顶居中显示。
+    this._toastHandler = (data) => {
+      try {
+        const banner = this.$root && this.$root.$refs && this.$root.$refs.errorBanner
+        if (banner && typeof banner.show === 'function') {
+          banner.show(data && data.msg ? String(data.msg) : '')
+        }
+      } catch (e) {
+        console.error('[BasePage] toast handler failed:', e)
+      }
+    }
+    this.on('app:toast', this._toastHandler)
   }
 
   /**

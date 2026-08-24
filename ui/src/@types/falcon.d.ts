@@ -31,6 +31,13 @@ type Falcon = {
             showToast(params: { message: string }): void;
             showLoading(params?: { message?: string }): void;
             hideLoading(): void;
+        },
+        // 扫码/输入结果监听：启动后监听 `scan_input` 事件拿输入文字。
+        // 底层通过 `miniapp_cli start <appid> softKeyboard` 拉起系统软键盘，
+        // 输入结果写入 history.db，由本模块轮询回传。
+        scanInput: {
+            initialize(): Promise<void>;
+            deinitialize(): Promise<void>;
         }
     },
     closeApp: () => void,

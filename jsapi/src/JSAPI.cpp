@@ -32,7 +32,7 @@ static std::vector<std::string> exportList = {
     // Uncomment module names below when enabling their exports.
     // "AI",
     // "IME",
-    // "ScanInput",
+    "ScanInput",
 };
 
 static int module_init(JSContext *ctx, JSModuleDef *m)
@@ -41,7 +41,7 @@ static int module_init(JSContext *ctx, JSModuleDef *m)
 
     // env->setModuleExport("AI", createAI(env.get()));
     // env->setModuleExport("IME", createIME(env.get()));
-    // env->setModuleExport("ScanInput", createScanInput(env.get()));
+    env->setModuleExport("ScanInput", createScanInput(env.get()));
 
     // Add your own module exports here, e.g.:
     // env->setModuleExport("MyModule", createMyModule(env.get()));

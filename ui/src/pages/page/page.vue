@@ -146,7 +146,7 @@
       <div class="popup-mask" @click="closePopup"></div>
       <div class="popup-box">
         <text class="popup-title">{{ popupTitle }}</text>
-        <input class="popup-input" type="text" :placeholder="popupPlaceholder" v-model="popupInput" />
+        <input class="popup-input" type="text" :placeholder="popupPlaceholder" v-model="popupInput" @focus="focusPopupInput" />
         <div class="popup-btns">
           <div class="popup-cancel" @click="closePopup">
             <text class="popup-btn-text">取消</text>
@@ -160,7 +160,7 @@
 
     <!-- 输入栏：原生 input，聚焦时系统自动弹输入法 -->
     <div class="chat-input-bar">
-      <input class="chat-input-field" type="text" placeholder="输入消息..." v-model="messageInput" />
+      <input class="chat-input-field" type="text" placeholder="输入消息..." v-model="messageInput" @focus="focusMessageInput" />
       <div class="chat-send-btn" @click="sendMessage">
         <text class="chat-send-text">发送</text>
       </div>

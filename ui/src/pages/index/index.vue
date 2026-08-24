@@ -6,24 +6,28 @@
     </div>
 
     <div class="login-form">
-      <div class="login-field">
+      <div class="login-field" @click="focusField('username')">
         <text class="login-label">用户名</text>
-        <input class="login-input" type="text" placeholder="输入用户名" v-model="username" />
+        <text class="login-value" v-if="username">{{ username }}</text>
+        <text class="login-placeholder" v-else>输入用户名</text>
       </div>
 
-      <div class="login-field">
+      <div class="login-field" @click="focusField('password')">
         <text class="login-label">密码</text>
-        <input class="login-input" type="password" placeholder="输入密码" v-model="password" />
+        <text class="login-value" v-if="password">{{ '•'.repeat(password.length) }}</text>
+        <text class="login-placeholder" v-else>输入密码</text>
       </div>
 
-      <div class="login-field" v-if="isRegister">
+      <div class="login-field" v-if="isRegister" @click="focusField('email')">
         <text class="login-label">邮箱</text>
-        <input class="login-input" type="text" placeholder="输入邮箱" v-model="email" />
+        <text class="login-value" v-if="email">{{ email }}</text>
+        <text class="login-placeholder" v-else>输入邮箱</text>
       </div>
 
       <div class="login-field login-field-code" v-if="isRegister">
         <text class="login-label">验证码</text>
-        <input class="login-input" type="text" placeholder="输入验证码" v-model="code" />
+        <text class="login-value" v-if="code">{{ code }}</text>
+        <text class="login-placeholder" v-else>输入验证码</text>
         <div class="login-code-btn" @click.stop="sendCode">
           <text class="login-code-text">{{ codeSent ? '已发送' : '发送' }}</text>
         </div>

@@ -2,6 +2,7 @@ import { defineComponent } from 'vue'
 import MessageItem from '../../components/MessageItem.vue'
 import { api, showToast } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
+import { startScanInput, onScanInput, offScanInput } from '../../lib/scanInput'
 
 export default defineComponent({
   components: { MessageItem },
@@ -11,6 +12,7 @@ export default defineComponent({
       userInfo: getUser() || { id: '', uid: '', username: '', nickname: '', points: 0 },
       activeTab: 'public' as string,
       messageInput: '',
+      scanTarget: 'message' as 'message' | 'popup',
 
       // 公共
       publicMessages: [] as any[],
@@ -73,6 +75,7 @@ export default defineComponent({
   async onShow() {
     await initAuth()
     this.userInfo = getUser() || this.userInfo
+    onScanInput(this.handleScanInput)
     this.checkinPoints = this.userInfo.points || 0
 
     try {
@@ -101,6 +104,7 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
+    offScanInput(this.handleScanInput)
   },
 
   onUnload() {
@@ -108,6 +112,7 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
+    offScanInput(this.handleScanInput)
   },
 
   methods: {
@@ -119,6 +124,26 @@ export default defineComponent({
       } else if (this.activeTab === 'groups' && this.selectedGroup) {
         this.loadGroupMessages()
       }
+    },
+
+    // ScanInput 回传文字：按当前聚焦目标回填
+    handleScanInput(text: string) {
+      if (this.scanTarget === 'popup') {
+        this.popupInput += text
+      } else {
+        this.messageInput += text
+      }
+    },
+
+    // 输入框聚焦：原生 input 不会自动弹系统输入法，显式拉起软键盘
+    focusMessageInput() {
+      this.scanTarget = 'message'
+      startScanInput()
+    },
+
+    focusPopupInput() {
+      this.scanTarget = 'popup'
+      startScanInput()
     },
 
     switchTab(tab: string) {

@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue'
-import { api, showToast } from '../../lib/api'
-import { saveAuth, initAuth, getToken, getUser } from '../../lib/store'
+import { api, showToast, getToken } from '../../lib/api'
+import { saveAuth, initAuth, getUser } from '../../lib/store'
 
 export default defineComponent({
   data() {

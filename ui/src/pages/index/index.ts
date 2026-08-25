@@ -17,6 +17,8 @@ export default defineComponent({
       keyboardVisible: false,
       // 键盘当前高度，0 表示键盘收起；用于把登录按钮上移避免被键盘遮挡
       keyboardHeight: 0,
+      // statusText 自动消失计时器
+      _statusTimer: 0 as any,
     }
   },
 
@@ -39,6 +41,18 @@ export default defineComponent({
   },
 
   methods: {
+    // 设置 statusText 错误提示，3s 后自动消失（避免一直占据屏幕顶部）
+    setStatus(text: string) {
+      this.statusText = text
+      if (this._statusTimer) {
+        clearTimeout(this._statusTimer)
+        this._statusTimer = 0
+      }
+      this._statusTimer = setTimeout(() => {
+        this.statusText = ''
+        this._statusTimer = 0
+      }, 3000)
+    },
     // 点击输入框：记录聚焦字段并弹出自绘键盘（系统输入法在此运行时不自动弹）
     focusField(field: string) {
       this.activeField = field
@@ -92,17 +106,15 @@ export default defineComponent({
 
     async sendCode() {
       if (this.loading) return  // 防重复点击
-      if (!this.email) { this.statusText = '请先输入邮箱'; showToast('请先输入邮箱'); return }
+      if (!this.email) { this.setStatus('请先输入邮箱'); return }
       if (this.codeSent) return
       this.loading = true
       try {
         await api.sendCode(this.email)
         this.codeSent = true
-        this.statusText = '验证码已发送'
-        showToast('验证码已发送')
+        this.setStatus('验证码已发送')
       } catch (err: any) {
-        this.statusText = err.message
-        showToast(err.message || '发送失败')
+        this.setStatus(err.message || '发送失败')
       } finally {
         this.loading = false
       }
@@ -111,34 +123,29 @@ export default defineComponent({
     async handleSubmit() {
       if (this.loading) return  // 防重复点击：loading 期间禁止二次点击
       if (!this.username || !this.password) {
-        this.statusText = '请填写用户名和密码'
-        showToast('请填写用户名和密码')
+        this.setStatus('请填写用户名和密码')
         return
       }
 
       if (this.isRegister) {
         if (!this.email || !this.code) {
-          this.statusText = '请填写所有字段'
-          showToast('请填写所有字段')
+          this.setStatus('请填写所有字段')
           return
         }
       }
 
       this.loading = true
-      this.statusText = this.isRegister ? '注册中...' : '登录中...'
-      showToast(this.isRegister ? '注册中...' : '登录中...')
+      this.setStatus(this.isRegister ? '注册中...' : '登录中...')
 
       try {
         if (this.isRegister) {
           const data = await api.register(this.username, this.password, this.email, this.code)
           await saveAuth(data.token, data.user)
-          this.statusText = '注册成功'
-          showToast('注册成功')
+          this.setStatus('注册成功')
         } else {
           const data = await api.login(this.username, this.password)
           await saveAuth(data.token, data.user)
-          this.statusText = '登录成功'
-          showToast('登录成功')
+          this.setStatus('登录成功')
         }
         this.statusText = ''
         // 登录成功后必须清键盘状态，避免 keyboardVisible=true 跳到 chat 页后状态泄漏，
@@ -146,9 +153,8 @@ export default defineComponent({
         this.closeKeyboard()
         $falcon.navTo('page', {})
       } catch (err: any) {
-        this.statusText = err.message || '操作失败'
-        showToast(err.message || '操作失败')
-        // 登录失败时也清键盘状态，让用户看到错误提示（statusText 在 scroller 内），
+        this.setStatus(err.message || '操作失败')
+        // 登录失败时也清键盘状态，让用户看到错误提示
         // 避免键盘挡住登录按钮导致用户无法重试
         this.closeKeyboard()
       } finally {

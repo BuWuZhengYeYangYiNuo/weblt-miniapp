@@ -46,12 +46,10 @@
       </div>
     </scroller>
 
-    <!-- 错误文本：固定位置 = 登录按钮之上、屏幕底部 48px 处。
-         之前的 bug：放在 scroller 末尾，y 坐标会落到按钮 fixed 区域 (216-252) 被遮住，
-         用户根本看不到错误信息。现在提到按钮之上，z-index 高于按钮，
-         红色加粗醒目，2.5s 自动消失。键盘弹起时让位给键盘。 -->
+    <!-- 错误状态文本：直接 fixed top:0 放到屏幕最顶层（用户原则：直接放最顶层）
+         24px 高，红底白字，3s 自动消失。绝对不会被任何按钮/弹窗遮 -->
     <div
-      v-if="statusText && !keyboardVisible"
+      v-if="statusText"
       class="login-status"
       @click="statusText = ''"
     >
@@ -72,11 +70,6 @@
       @back="onKeyboardBack"
       @confirm="onKeyboardConfirm"
     />
-
-    <!-- 置顶居中错误提示 banner：词典笔屏小，原生 toast 在底部看不见。
-         通过 $falcon.trigger('app:toast', {msg}) 全局事件由 BasePage 转发到此组件。
-         z-index 500（最高），始终位于登录按钮之上 -->
-    <ErrorBanner ref="errorBanner" />
   </div>
 </template>
 
@@ -87,12 +80,10 @@
 <script>
 import index from './index';
 import Keyboard from '../../components/Keyboard.vue';
-import ErrorBanner from '../../components/ErrorBanner.vue';
 export default {
   ...index,
   components: {
     Keyboard,
-    ErrorBanner,
   },
 };
 </script>

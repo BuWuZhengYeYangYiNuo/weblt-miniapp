@@ -44,11 +44,19 @@
       <div class="login-switch" @click="toggleMode">
         <text class="login-switch-text">{{ isRegister ? '已有账号？登录' : '没有账号？注册' }}</text>
       </div>
-
-      <div class="login-status" v-if="statusText">
-        <text class="login-status-text">{{ statusText }}</text>
-      </div>
     </scroller>
+
+    <!-- 错误文本：固定位置 = 登录按钮之上、屏幕底部 48px 处。
+         之前的 bug：放在 scroller 末尾，y 坐标会落到按钮 fixed 区域 (216-252) 被遮住，
+         用户根本看不到错误信息。现在提到按钮之上，z-index 高于按钮，
+         红色加粗醒目，2.5s 自动消失。键盘弹起时让位给键盘。 -->
+    <div
+      v-if="statusText && !keyboardVisible"
+      class="login-status"
+      @click="statusText = ''"
+    >
+      <text class="login-status-text">{{ statusText }}</text>
+    </div>
 
     <!-- 登录按钮：键盘不弹时显示，键盘弹起时隐藏（避免遮挡键盘底部的"确定"键），
          键盘消失后按钮重新出现，用户点登录；这样既能保证按钮可见又不挡键盘 -->
@@ -66,7 +74,8 @@
     />
 
     <!-- 置顶居中错误提示 banner：词典笔屏小，原生 toast 在底部看不见。
-         通过 $falcon.trigger('app:toast', {msg}) 全局事件由 BasePage 转发到此组件。 -->
+         通过 $falcon.trigger('app:toast', {msg}) 全局事件由 BasePage 转发到此组件。
+         z-index 500（最高），始终位于登录按钮之上 -->
     <ErrorBanner ref="errorBanner" />
   </div>
 </template>

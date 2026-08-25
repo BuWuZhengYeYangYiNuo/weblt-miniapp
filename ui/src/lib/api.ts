@@ -66,16 +66,27 @@ async function request(path: string, options: { method?: string; data?: any } = 
 }
 
 // 错误/提示浮层：
-// 1. 触发 app:toast 全局事件，由 BasePage 转发给当前页面的 <ErrorBanner ref="errorBanner">，
-//    在屏幕顶部居中显示（词典笔 260px 屏小，原生 showToast 在底部看不见）。
-// 2. 同时保留 native $falcon.jsapi.ui.showToast 兜底（如 banner 还没挂载时仍能提示）。
+// 1. 直接调 globalThis.__webltErrorBanner.show(msg) - 挂载在 ErrorBanner 组件
+//    mounted 时的全局引用。避免之前 base-page.js 转发 toast 时 this.$root 失效的 bug
+//    （falcon Page 不是 Vue 组件，$root 是 undefined，导致 banner 红色显示但文字看不见）
+// 2. 兼容 trigger 事件（其他可能仍在监听的代码）
+// 3. native $falcon.jsapi.ui.showToast 兜底（防止 banner 还没挂载时也能提示）
 export function showToast(msg: string) {
+  const text = (msg === undefined || msg === null) ? '' : String(msg)
   try {
-    ($falcon as any).trigger('app:toast', { msg })
+    const banner = (globalThis as any).__webltErrorBanner
+    if (banner && typeof banner.show === 'function') {
+      banner.show(text)
+    }
+  } catch {}
+  try {
+    if (typeof $falcon !== 'undefined' && typeof $falcon.trigger === 'function') {
+      $falcon.trigger('app:toast', { msg: text })
+    }
   } catch {}
   try {
     if ($falcon?.jsapi?.ui?.showToast) {
-      ($falcon as any).jsapi.ui.showToast({ message: msg })
+      ($falcon as any).jsapi.ui.showToast({ message: text })
     }
   } catch {}
 }

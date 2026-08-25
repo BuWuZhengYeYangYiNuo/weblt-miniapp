@@ -123,25 +123,30 @@
   color: #3b82f6;
 }
 
-// 错误状态文本：独立 fixed 元素，固定在登录按钮之上 8px
+// 错误状态文本：独立 fixed 元素，固定在登录按钮之上 4px（紧贴按钮）
 // 之前在 scroller 末尾会被 fixed login-btn 遮住，用户根本看不到错误
-// 现在 fixed bottom:52（按钮高 36 + gap 8 + bottom:8）永远可见在按钮之上
+// 现在 fixed bottom:48（按钮高 36 + 紧贴 4 + bottom:8）永远可见在按钮正上方
 // z-index:260 > login-btn 250，保证不被按钮遮
+// 字号加到 14px、加白边、加 padding，让用户绝对能看清
 .login-status {
   position: fixed;
-  bottom: 52px;
-  left: 0;
-  width: 100%;
-  height: 22px;
+  bottom: 48px;
+  left: 8px;
+  right: 8px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(239, 68, 68, 0.92);
+  background-color: #ef4444;        // 不透明实红，醒目
+  border-radius: 4px;
+  border-width: 1px;
+  border-color: #ffffff;
   z-index: 260;
+  padding: 0 8px;
 }
 
 .login-status-text {
-  font-size: 13px;
+  font-size: 14px;
   color: #ffffff;
   font-weight: bold;
   text-align: center;

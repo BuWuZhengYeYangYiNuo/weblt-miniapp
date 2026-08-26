@@ -181,19 +181,14 @@
       </div>
     </div>
 
-    <!-- 搜索/创建群 弹窗：改用原生 input + 系统输入法（用户要求：改用系统输入法）
-         系统输入法自动弹，省掉自绘 Keyboard 的所有复杂度 -->
+    <!-- 搜索/创建群 弹窗：自绘 Keyboard（不依赖 OS 输入法） -->
     <div class="chat-popup" v-if="popupVisible">
       <div class="popup-mask" @click="closePopup"></div>
       <div class="popup-box">
         <text class="popup-title">{{ popupTitle }}</text>
-        <input
-          class="popup-input"
-          type="text"
-          :placeholder="popupPlaceholder"
-          v-model="popupInput"
-          @focus="onPopupInputFocus"
-        />
+        <div class="popup-input" @click="openKeyboard('popup')">
+          <text class="popup-input-text">{{ popupInput || popupPlaceholder }}</text>
+        </div>
         <div class="popup-btns">
           <div class="popup-cancel" @click="closePopup">
             <text class="popup-btn-text">取消</text>
@@ -205,18 +200,24 @@
       </div>
     </div>
 
-    <!-- 输入栏：native input + v-model + @focus 触发系统软键盘（抄自 ScanInput.showKeyboard） -->
+    <!-- 输入栏：点文本框弹自绘 Keyboard（不依赖 OS 输入法） -->
     <div class="chat-input-bar">
-      <input
-        class="chat-input-field"
-        type="text"
-        placeholder="输入消息..."
-        v-model="messageInput"
-        @focus="onMessageInputFocus"
-      />
+      <div class="chat-input-field" @click="openKeyboard('message')">
+        <text class="chat-input-text">{{ messageInput || '输入消息...' }}</text>
+      </div>
       <div class="chat-send-btn" @click="sendMessage">
         <text class="chat-send-text">发送</text>
       </div>
+    </div>
+
+    <!-- 自绘键盘：fixed bottom 0 z-index 200 -->
+    <div class="kb-wrapper" v-if="showKeyboard">
+      <Keyboard
+        @input="onKbInput"
+        @back="onKbBack"
+        @enter="onKbEnter"
+        @confirm="onKbConfirm"
+      />
     </div>
 
     <!-- 群创建结果/好友搜索结果弹窗 -->
@@ -248,10 +249,12 @@
 
 <script>
 import page from './page';
+import Keyboard from '../../components/Keyboard.vue';
 import ErrorBanner from '../../components/ErrorBanner.vue';
 export default {
   ...page,
   components: {
+    Keyboard,
     ErrorBanner,
   },
 };

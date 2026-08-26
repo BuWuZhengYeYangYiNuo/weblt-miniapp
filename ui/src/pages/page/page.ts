@@ -2,7 +2,6 @@ import { defineComponent } from 'vue'
 import MessageItem from '../../components/MessageItem.vue'
 import { api, showToast, setAuthFailedHandler } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
-import { startSystemKeyboard } from '../index/index'
 
 export default defineComponent({
   components: { MessageItem },
@@ -12,8 +11,6 @@ export default defineComponent({
       userInfo: getUser() || { id: '', uid: '', username: '', nickname: '', points: 0 },
       activeTab: 'public' as string,
       messageInput: '',
-      // 当前激活的输入目标（用系统软键盘追加字符）
-      activeInput: '' as 'message' | 'popup' | '',
 
       // 公共
       publicMessages: [] as any[],
@@ -43,6 +40,10 @@ export default defineComponent({
       popupInput: '',
       searchResult: null as any,
 
+      // 自绘键盘：单一键盘组件实例服务于消息输入和弹窗输入（互斥）
+      showKeyboard: false,
+      keyboardTarget: 'message' as 'message' | 'popup',
+
       // 轮询
       pollTimer: 0 as any,
       // 发送消息期间的单次锁，防止用户连点导致重复发送
@@ -52,7 +53,7 @@ export default defineComponent({
 
   computed: {
     contentHeight(): number {
-      // 聊天内容区高度：屏高 - topbar - input-bar - 公告（系统 IME 由 native 控制，不影响布局）
+      // 聊天内容区高度：屏高 - topbar - input-bar - 公告
       let h = 260 - 28 - 32
       if (this.announcement) h -= 20
       return h
@@ -155,22 +156,38 @@ export default defineComponent({
       this.activeTab = tab
     },
 
-    // 触发系统软键盘：native input focus 时调
-    onMessageInputFocus() {
-      this.activeInput = 'message'
-      startSystemKeyboard((ch) => {
-        if (this.activeInput === 'message') this.messageInput += ch
-        else if (this.activeInput === 'popup') this.popupInput += ch
-      })
+    // 打开自绘键盘（消息输入或弹窗输入）
+    openKeyboard(target: 'message' | 'popup') {
+      this.keyboardTarget = target
+      this.showKeyboard = true
     },
 
-    onPopupInputFocus() {
-      this.activeInput = 'popup'
-      // 关闭 message 输入焦点状态，避免新字符加错地方
-      startSystemKeyboard((ch) => {
-        if (this.activeInput === 'message') this.messageInput += ch
-        else if (this.activeInput === 'popup') this.popupInput += ch
-      })
+    // 自绘键盘 emit input（一个字符）
+    onKbInput(ch: string) {
+      if (this.keyboardTarget === 'message') this.messageInput += ch
+      else if (this.keyboardTarget === 'popup') this.popupInput += ch
+    },
+
+    // 自绘键盘 emit backspace
+    onKbBack() {
+      if (this.keyboardTarget === 'message') this.messageInput = this.messageInput.slice(0, -1)
+      else if (this.keyboardTarget === 'popup') this.popupInput = this.popupInput.slice(0, -1)
+    },
+
+    // 自绘键盘 emit enter（消息输入场景：发送消息）
+    onKbEnter() {
+      if (this.keyboardTarget === 'message') {
+        this.showKeyboard = false
+        this.sendMessage()
+      } else {
+        // 弹窗输入：enter 只触发 confirm，由用户确认后调用 confirmPopup
+        this.showKeyboard = false
+      }
+    },
+
+    // 自绘键盘 emit confirm
+    onKbConfirm() {
+      this.showKeyboard = false
     },
 
     formatTime(timeStr: string): string {
@@ -292,9 +309,7 @@ export default defineComponent({
         showToast('已退出群聊')
         this.selectedGroup = null
         await this.loadGroups()
-      } catch (err: any) {
-        showToast(err.message)
-      }
+      } catch {}
     },
 
     async disbandGroup() {
@@ -305,9 +320,7 @@ export default defineComponent({
         showToast('群聊已解散')
         this.selectedGroup = null
         await this.loadGroups()
-      } catch (err: any) {
-        showToast(err.message)
-      }
+      } catch {}
     },
 
     // 群组 header 按钮：根据 role 调 leave/disband（避免 @click 表达式在 precompiler 中行为不确定）
@@ -350,6 +363,8 @@ export default defineComponent({
       this.showCreate = false
       this.showJoin = false
       this.popupInput = ''
+      // 关闭弹窗时也关键盘
+      this.showKeyboard = false
     },
 
     async confirmPopup() {

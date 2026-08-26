@@ -9,45 +9,25 @@ interface KbKey {
   action: string
 }
 
-// 9 键每个数字键对应的拼音字母（经典 T9 布局）
-const T9_KEYS: { digit: string; letters: string }[] = [
-  { digit: '2', letters: 'abc' },
-  { digit: '3', letters: 'def' },
-  { digit: '4', letters: 'ghi' },
-  { digit: '5', letters: 'jkl' },
-  { digit: '6', letters: 'mno' },
-  { digit: '7', letters: 'pqrs' },
-  { digit: '8', letters: 'tuv' },
-  { digit: '9', letters: 'wxyz' },
-]
-
 export default defineComponent({
   data() {
     return {
       // letters | numbers | symbols | chinese
       mode: 'chinese' as 'letters' | 'numbers' | 'symbols' | 'chinese',
       shift: false,
-      // 中文模式下：qwerty(全键) | t9(9键)
-      layout: 'qwerty' as 'qwerty' | 't9',
       // 中文拼音缓冲（已拼好的拼音串，例如 "ni"）
       pinyin: '',
       // 英文/数字/符号模式：最近输入的字符缓冲（用于 input preview bar 显示）
       inputBuffer: '' as string,
-      // 9 键点击状态：上一次按的数字键 与 该键已的位次数
-      t9LastDigit: '' as string,
-      t9TapCount: 0,
       // 候选汉字（来自内置 pinyin-data.ts，不依赖 native IME）
       candidates: [] as string[],
-      // 当前键盘物理状态（行数不同则不同），用于通知父页面滚动区让位
+      // 当前键盘物理高度（行数不同则不同），用于通知父页面滚动区让位
       kbHeight: 156,
     }
   },
 
   watch: {
     mode() {
-      this.syncHeight()
-    },
-    layout() {
       this.syncHeight()
     },
   },
@@ -79,7 +59,7 @@ export default defineComponent({
         case 'symbols':
           return this.symbolRows
         case 'chinese':
-          return this.layout === 't9' ? this.t9Rows : this.chineseQwertyRows
+          return this.chineseQwertyRows
       }
     },
 
@@ -88,32 +68,13 @@ export default defineComponent({
       const s = this.shift
       return [
         [...this.makeRow('qwertyuiop', s), { id: 'ch-123', display: '123', value: '', cls: 'kb-key-mode', action: 'to123' }],
-        [...this.makeRow('asdfghjkl', s), { id: 'ch-9', display: '9键', value: '', cls: 'kb-key-mode', action: 't9toggle' }],
+        [...this.makeRow('asdfghjkl', s)],
         [
           { id: 'ch-en', display: 'EN', value: '', cls: 'kb-key-mode', action: 'ch2en' },
           ...this.makeRow('zxcvbnm', s),
           { id: 'back', display: '←', value: '', cls: 'kb-key-back', action: 'back' },
         ],
       ]
-    },
-
-    // 9 键中文：数字键行 + 功能键行
-    t9Rows(): KbKey[][] {
-      const digitRow = T9_KEYS.map((k) => ({
-        id: 't9-' + k.digit,
-        display: k.digit,
-        value: k.digit,
-        cls: 'kb-key-t9',
-        action: 't9',
-      }))
-      const funcRow: KbKey[] = [
-        { id: 'ch-123', display: '123', value: '', cls: 'kb-key-mode', action: 'to123' },
-        { id: 'ch-en', display: 'EN', value: '', cls: 'kb-key-mode', action: 'ch2en' },
-        { id: 'ch-back', display: '←', value: '', cls: 'kb-key-back', action: 'back' },
-        { id: 'ch-space', display: '空', value: ' ', cls: 'kb-key-space', action: 'space' },
-        { id: 'ch-enter', display: '→', value: '', cls: 'kb-key-enter', action: 'enter' },
-      ]
-      return [digitRow, funcRow]
     },
 
     letterRows(): KbKey[][] {
@@ -215,24 +176,8 @@ export default defineComponent({
       // IME 词频更新跳过（native IME 不可用，纯前端无法持久化频率）
       // 上屏后清空拼音缓冲，准备下一次输入
       this.pinyin = ''
-      this.t9LastDigit = ''
-      this.t9TapCount = 0
+      this.inputBuffer = ''
       this.candidates = []
-    },
-
-    // 9 键点击：经典 T9 无计时实现
-    onT9Tap(digit: string) {
-      const info = T9_KEYS.find((k) => k.digit === digit)
-      if (!info) return
-      if (this.t9LastDigit !== digit) {
-        this.t9LastDigit = digit
-        this.t9TapCount = 0
-        this.pinyin += info.letters[0]
-      } else {
-        this.t9TapCount = (this.t9TapCount + 1) % info.letters.length
-        this.pinyin = this.pinyin.slice(0, -1) + info.letters[this.t9TapCount]
-      }
-      this.refreshCandidates()
     },
 
     onKeyTap(key: KbKey) {
@@ -256,8 +201,6 @@ export default defineComponent({
       } else if (key.action === 'ch2en') {
         this.mode = 'letters'
         this.clearPinyin()
-      } else if (key.action === 't9toggle') {
-        this.layout = this.layout === 'qwerty' ? 't9' : 'qwerty'
       } else if (key.action === 'space') {
         this.onSpace()
       } else if (key.action === 'pinyin') {
@@ -265,8 +208,6 @@ export default defineComponent({
         this.pinyin += key.value.toLowerCase()
         this.inputBuffer = (this.inputBuffer + key.value.toLowerCase()).slice(-12)
         this.refreshCandidates()
-      } else if (key.action === 't9') {
-        this.onT9Tap(key.value)
       }
     },
 
@@ -277,11 +218,8 @@ export default defineComponent({
 
     clearPinyin() {
       this.pinyin = ''
-      this.t9LastDigit = ''
-      this.t9TapCount = 0
-      this.candidates = []
-      // 切模式/清拼音时也清 inputBuffer（让 preview bar 同步）
       this.inputBuffer = ''
+      this.candidates = []
     },
 
     onBack() {
@@ -289,8 +227,6 @@ export default defineComponent({
         if (this.pinyin) {
           this.pinyin = this.pinyin.slice(0, -1)
           this.inputBuffer = this.inputBuffer.slice(0, -1)
-          this.t9LastDigit = ''
-          this.t9TapCount = 0
           this.refreshCandidates()
           return
         }
@@ -330,7 +266,7 @@ export default defineComponent({
     syncHeight() {
       if (this.mode === 'chinese') {
         // input preview(28) + 候选栏(32) + 字母行 + 底部 [空格][确定] 行(28)
-        this.kbHeight = (this.layout === 't9' ? 2 : 3) * 28 + 28 + 32 + 28
+        this.kbHeight = 3 * 28 + 28 + 32 + 28
       } else {
         // input preview(28) + 普通 3 行 + 底部 [空格][确定] 行(28)
         this.kbHeight = 3 * 28 + 28 + 28

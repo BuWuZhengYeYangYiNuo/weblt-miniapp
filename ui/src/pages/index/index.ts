@@ -1,24 +1,6 @@
 import { defineComponent } from 'vue'
 import { api, getToken } from '../../lib/api'
 import { saveAuth, initAuth, getUser } from '../../lib/store'
-import {
-  openSystemKeyboard,
-  onSystemInputResult,
-  consumeKeyboardResultFromOptions,
-  onEventLog,
-  pushEventLog,
-  startPollingProbe,
-  stopPollingProbe,
-  SysImeLogEntry,
-} from '../../lib/system-ime'
-
-// 兼容老 API（chat 页 import startSystemKeyboard from '../index/index'）
-export { startSystemKeyboard } from '../../lib/system-ime'
-
-// 调试工具：把 base-page 转发的 hook 调用记到全局 event log
-function pushEventLogForDebug(hook: string, options: any) {
-  pushEventLog(hook, options === null ? null : (options || {}))
-}
 
 export default defineComponent({
   data() {
@@ -27,41 +9,22 @@ export default defineComponent({
       password: '',
       statusText: '',
       loading: false,
-      // IME 结果
-      imeResult: null as { text: string; source: string; raw?: any } | null,
-      // 实时事件流（$falcon.on 触发的所有事件都记在这里，便于排查回传渠道）
-      imeEventLog: [] as SysImeLogEntry[],
-      // 当前激活的 IME 字段
-      _activeImeField: '' as 'username' | 'password' | '',
-      // 调试面板开关
-      showDebug: false,
+      // 自绘键盘：显示开关
+      showKeyboard: false,
+      // 自绘键盘目标字段：'username' | 'password'
+      keyboardTarget: 'username' as 'username' | 'password',
       // statusText 自动消失计时器
       _statusTimer: 0 as any,
     }
   },
 
-  async onLoad(options?: any) {
+  async onLoad() {
     try {
       await initAuth()
     } catch {
       this.username = ''
       this.password = ''
     }
-    onSystemInputResult((r) => {
-      this.imeResult = r
-    })
-    onEventLog((log) => {
-      this.imeEventLog = log.slice()
-    })
-    // 把 options 也记到 event log（调试用：哪个 hook 接收了 IME 回传的 options）
-    try { pushEventLogForDebug('hook:onLoad', options) } catch {}
-    consumeKeyboardResultFromOptions(options)
-  },
-
-  async onNewOptions(options?: any) {
-    // navTo 重新启动此页时（比如关闭子 app 回到本 page），options 里可能有 IME 结果
-    try { pushEventLogForDebug('hook:onNewOptions', options) } catch {}
-    consumeKeyboardResultFromOptions(options)
   },
 
   // onShow 现在由 base-page.js 转发，签名 (options?: any) 以接收框架传回的 options
@@ -73,32 +36,15 @@ export default defineComponent({
       this.password = ''
     }
 
-    // 注册系统输入法结果监听（一次性）
-    onSystemInputResult((r) => {
-      // 全屏置顶展示收到的文本
-      this.imeResult = r
-    })
-    onEventLog((log) => {
-      this.imeEventLog = log.slice()
-    })
-
-    // 把 options 也记到 event log（调试用：哪个 hook 接收了 IME 回传的 options）
-    try { pushEventLogForDebug('hook:onShow', options) } catch {}
-
-    // navTo 返回时框架把结果放在 onShow options 里（渠道 A：onShow:options）
-    consumeKeyboardResultFromOptions(options)
+    // navTo 回栈底时把字段填回去（如果 webblt 被框架重启并传了 IME 结果）
+    if (options && options.field && typeof options.text === 'string') {
+      if (options.field === 'username') this.username = options.text
+      else if (options.field === 'password') this.password = options.text
+    }
 
     if (getToken() && getUser()) {
       $falcon.navTo('page', {})
     }
-  },
-
-  onUnload() {
-    try { pushEventLogForDebug('hook:onUnload', null) } catch {}
-  },
-
-  onHide() {
-    // 用户切走时清理 IME 面板避免页面回来时残留
   },
 
   methods: {
@@ -124,29 +70,33 @@ export default defineComponent({
       this.setStatus(`${title}: ${content}`)
     },
 
-    // 调起系统输入法（用于登录）：把 username 字段当前值传进去
-    openImeFor(field: 'username' | 'password') {
-      this._activeImeField = field
-      // 启动轮询探测 + 调起有道输入法
-      startPollingProbe()
-      openSystemKeyboard({
-        contents: field === 'username' ? this.username : this.password,
-        uuid: 'login-' + field + '-' + Date.now(),
-        maxLength: field === 'password' ? 50 : 30,
-      })
+    // 打开自绘键盘（点用户名/密码行触发）
+    openKeyboard(field: 'username' | 'password') {
+      this.keyboardTarget = field
+      this.showKeyboard = true
     },
 
-    // 关闭轮询（用户离开登录页时调用）
-    stopPolling() {
-      stopPollingProbe()
+    // 自绘键盘 emit input（一个字符）
+    onKbInput(ch: string) {
+      if (this.keyboardTarget === 'username') this.username += ch
+      else this.password += ch
     },
 
-    // 应用 IME 结果到对应字段
-    applyImeResult(field: 'username' | 'password') {
-      if (!this.imeResult) return
-      if (field === 'username') this.username = this.imeResult.text
-      else this.password = this.imeResult.text
-      this.imeResult = null
+    // 自绘键盘 emit backspace
+    onKbBack() {
+      if (this.keyboardTarget === 'username') this.username = this.username.slice(0, -1)
+      else this.password = this.password.slice(0, -1)
+    },
+
+    // 自绘键盘 emit enter（提交登录）
+    onKbEnter() {
+      this.showKeyboard = false
+      this.handleSubmit()
+    },
+
+    // 自绘键盘 emit confirm（点"确定"，只关键盘）
+    onKbConfirm() {
+      this.showKeyboard = false
     },
 
     async handleSubmit() {
@@ -172,10 +122,6 @@ export default defineComponent({
       } finally {
         this.loading = false
       }
-    },
-
-    dismissImeResult() {
-      this.imeResult = null
     },
   },
 })

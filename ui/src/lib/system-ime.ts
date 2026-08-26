@@ -134,6 +134,85 @@ export function clearActiveHandler() {
   _activeUuid = ''
 }
 
+/**
+ * 轮询探测模式：每隔 200ms 扫描所有可能存 IME 结果的全局位置，
+ * 读到的非空文本立刻推回 _activeHandler 并 push 到 event log。
+ * 解决"有道输入法关闭时根本不通知 webblt"的回传死锁。
+ *
+ * 轮询目标（dump 出来 + 经验猜的）：
+ *  - $falcon.keyboardResult / $falcon.lastResult / $falcon.imeResult
+ *  - $falcon.am.*  (amModule 是 am module 框架的命名空间)
+ *  - globalThis.__imeResult / __keyboardResult / __lastNavToResult
+ *  - $falcon.appData / $falcon.appDataMap
+ *  - history.db 里的最新一条（如果 jsapi 暴露 getter）
+ */
+let _pollTimer: any = 0
+let _pollSeen = new Set<string>()  // 去重：相同文本不重复回调
+
+export function startPollingProbe() {
+  if (_pollTimer) return
+  pushEventLog('poll:start', null)
+  _pollTimer = setInterval(() => {
+    if (!_activeHandler) return
+
+    // 枚举所有可能的"结果存放点"
+    const candidates: Array<{ path: string; value: any }> = []
+
+    // 1. $falcon 上的多个属性
+    const f = ($falcon as any) || {}
+    for (const k of ['keyboardResult', 'lastResult', 'imeResult', 'appData', 'appDataMap',
+                     'lastNavToResult', 'navToResult', 'lastInputResult', 'inputResult',
+                     'pendingResult', 'pageResult', 'callerResult']) {
+      try { if (f[k] !== undefined) candidates.push({ path: '$falcon.' + k, value: f[k] }) } catch {}
+    }
+
+    // 2. $falcon.am.* 子模块
+    try {
+      const am = f.am || f.amModule || f.AmModule
+      if (am) {
+        for (const k of Object.keys(am)) {
+          try {
+            const v = am[k]
+            if (v && typeof v === 'object') candidates.push({ path: '$falcon.am.' + k, value: v })
+          } catch {}
+        }
+      }
+    } catch {}
+
+    // 3. globalThis 多个可能
+    const g = (globalThis as any) || {}
+    for (const k of ['__imeResult', '__keyboardResult', '__lastNavToResult',
+                     '__youdaoResult', '__inputResult', '__pendingResult',
+                     '__falconKeyboardResult', '__sysImeLastResult']) {
+      try { if (g[k] !== undefined) candidates.push({ path: 'globalThis.' + k, value: g[k] }) } catch {}
+    }
+
+    // 4. 抽取"看起来像 IME 结果"的文本
+    for (const c of candidates) {
+      let text = ''
+      const v = c.value
+      if (typeof v === 'string') text = v
+      else if (v && typeof v === 'object') {
+        text = v.text || v.resultText || v.contents || v.commitText ||
+               v.value || v.word || v.data || v.result || ''
+        if (typeof text !== 'string') text = ''
+      }
+      if (!text || text.length > 500) continue  // 过滤空/超大（json dump 噪声）
+      const key = c.path + '|' + text
+      if (_pollSeen.has(key)) continue
+      _pollSeen.add(key)
+      pushEventLog('poll:' + c.path, text)
+      try { _activeHandler({ text, source: 'poll:' + c.path, raw: v }) } catch {}
+    }
+  }, 200)
+}
+
+export function stopPollingProbe() {
+  if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = 0 }
+  _pollSeen.clear()
+  pushEventLog('poll:stop', null)
+}
+
 // 兼容旧代码：原来 ScanInput 风格是 "每个字符 publish → 回调一段字符串"
 const _charStreamHandlers: ((ch: string) => void)[] = []
 

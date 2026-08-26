@@ -7,6 +7,8 @@ import {
   consumeKeyboardResultFromOptions,
   onEventLog,
   pushEventLog,
+  startPollingProbe,
+  stopPollingProbe,
   SysImeLogEntry,
 } from '../../lib/system-ime'
 
@@ -125,11 +127,18 @@ export default defineComponent({
     // 调起系统输入法（用于登录）：把 username 字段当前值传进去
     openImeFor(field: 'username' | 'password') {
       this._activeImeField = field
+      // 启动轮询探测 + 调起有道输入法
+      startPollingProbe()
       openSystemKeyboard({
         contents: field === 'username' ? this.username : this.password,
         uuid: 'login-' + field + '-' + Date.now(),
         maxLength: field === 'password' ? 50 : 30,
       })
+    },
+
+    // 关闭轮询（用户离开登录页时调用）
+    stopPolling() {
+      stopPollingProbe()
     },
 
     // 应用 IME 结果到对应字段

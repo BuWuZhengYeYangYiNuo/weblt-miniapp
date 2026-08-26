@@ -79,6 +79,9 @@
       @click="showDebug = false"
     >
       <text class="debug-panel-title">事件流（最近 {{ imeEventLog.length }} 条）</text>
+      <div class="debug-panel-poll" @click.stop="stopPolling">
+        <text class="debug-panel-poll-text">停止轮询</text>
+      </div>
       <scroller class="debug-panel-scroller" scroll-y show-scrollbar>
         <div
           v-for="(e, i) in imeEventLog"

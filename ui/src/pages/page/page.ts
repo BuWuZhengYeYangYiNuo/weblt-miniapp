@@ -2,6 +2,7 @@ import { defineComponent } from 'vue'
 import MessageItem from '../../components/MessageItem.vue'
 import { api, showToast, setAuthFailedHandler } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
+import { startSystemKeyboard } from '../index/index'
 
 export default defineComponent({
   components: { MessageItem },
@@ -11,6 +12,8 @@ export default defineComponent({
       userInfo: getUser() || { id: '', uid: '', username: '', nickname: '', points: 0 },
       activeTab: 'public' as string,
       messageInput: '',
+      // 当前激活的输入目标（用系统软键盘追加字符）
+      activeInput: '' as 'message' | 'popup' | '',
 
       // 公共
       publicMessages: [] as any[],
@@ -150,6 +153,24 @@ export default defineComponent({
     // 切 tab：清空旧消息避免视觉混淆（系统输入法由 native 控制，不影响）
     switchTab(tab: string) {
       this.activeTab = tab
+    },
+
+    // 触发系统软键盘：native input focus 时调
+    onMessageInputFocus() {
+      this.activeInput = 'message'
+      startSystemKeyboard((ch) => {
+        if (this.activeInput === 'message') this.messageInput += ch
+        else if (this.activeInput === 'popup') this.popupInput += ch
+      })
+    },
+
+    onPopupInputFocus() {
+      this.activeInput = 'popup'
+      // 关闭 message 输入焦点状态，避免新字符加错地方
+      startSystemKeyboard((ch) => {
+        if (this.activeInput === 'message') this.messageInput += ch
+        else if (this.activeInput === 'popup') this.popupInput += ch
+      })
     },
 
     formatTime(timeStr: string): string {

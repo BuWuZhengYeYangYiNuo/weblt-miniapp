@@ -192,6 +192,7 @@
           type="text"
           :placeholder="popupPlaceholder"
           v-model="popupInput"
+          @focus="onPopupInputFocus"
         />
         <div class="popup-btns">
           <div class="popup-cancel" @click="closePopup">
@@ -204,15 +205,14 @@
       </div>
     </div>
 
-    <!-- 输入栏：native input + v-model，系统输入法自动弹。
-         之前用 div+text 模拟是为了绕开 native input 与自绘键盘不同步，
-         现在改用系统输入法，native input 直接接收 IME 输入，v-model 自动同步 -->
+    <!-- 输入栏：native input + v-model + @focus 触发系统软键盘（抄自 ScanInput.showKeyboard） -->
     <div class="chat-input-bar">
       <input
         class="chat-input-field"
         type="text"
         placeholder="输入消息..."
         v-model="messageInput"
+        @focus="onMessageInputFocus"
       />
       <div class="chat-send-btn" @click="sendMessage">
         <text class="chat-send-text">发送</text>

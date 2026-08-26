@@ -5,7 +5,10 @@
       <text class="login-subtitle">登录</text>
     </div>
 
-    <!-- 原生 input + v-model：focus 自动弹系统输入法（用户要求：原生输入框） -->
+    <!-- 触发系统软键盘：
+         1. native input @focus 调用 ScanInput.showKeyboard() 弹起系统软键盘
+         2. 系统软键盘输入的字符通过 scan_input 事件追加到对应字段
+         3. v-model 仍然绑定（fallback 时 native input 直接输入字符） -->
     <div class="login-form">
       <input
         class="login-input"
@@ -13,6 +16,7 @@
         placeholder="输入用户名"
         v-model="username"
         return-key-type="next"
+        @focus="onInputFocus('username')"
       />
 
       <input
@@ -21,6 +25,7 @@
         placeholder="输入密码"
         v-model="password"
         return-key-type="done"
+        @focus="onInputFocus('password')"
       />
     </div>
 
@@ -29,7 +34,7 @@
       <text class="login-btn-text">登录</text>
     </div>
 
-    <!-- 兜底 statusText（如果原生 showAlert 不可用时显示） -->
+    <!-- 兜底错误显示 -->
     <div
       v-if="statusText"
       class="login-status"

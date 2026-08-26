@@ -32,31 +32,39 @@
   margin-left: 12px;
 }
 
-// scroller 占中间区：top:40, bottom:48(btn 36+marg 12) → 高度 172
+// 登录表单：顶部 header 之下、底部按钮之上
 .login-form {
   position: absolute;
   top: 40px;
   left: 0;
-  width: 100%;
-  bottom: 48px;
-  background-color: #1a1a2e;
+  right: 0;
+  bottom: 84px;          // 留出登录按钮 + 切换模式行
+  padding: 12px 40px 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.login-field {
+// native input：让系统输入法正常工作（focus 自动弹 IME）
+.login-input {
   height: 32px;
+  font-size: 14px;
+  color: #ffffff;
+  background-color: #0f3460;
+  border-radius: 4px;
+  border-width: 0;
+  padding: 0 8px;
+  margin-top: 8px;
+}
+
+.login-input-code {
+  flex: 1;
+  margin-right: 4px;
+}
+
+.login-code-row {
   display: flex;
   flex-direction: row;
   align-items: center;
-  background-color: #0f3460;
-  border-radius: 4px;
-  margin-top: 4px;
-  padding: 0 8px;
-}
-
-.login-label {
-  width: 50px;
-  font-size: 14px;
-  color: #8899aa;
 }
 
 .login-code-btn {
@@ -69,13 +77,16 @@
   justify-content: center;
 }
 
+.login-code-btn:active {
+  background-color: #93c5fd;
+}
+
 .login-code-text {
   font-size: 12px;
   color: #ffffff;
 }
 
-// 登录按钮：fixed bottom 8px 永远可见；z-index 250 > 键盘 200，键盘弹起时压在键盘上方
-// 不跟随键盘移动——保证任何时候登录按钮可见，输完密码可直接点
+// 登录按钮：fixed bottom 8px 永远可见
 .login-btn {
   position: fixed;
   bottom: 8px;
@@ -87,21 +98,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 250;
+  z-index: 100;
 }
 
-// 按钮按压反馈：短暂变浅蓝/亮色
 .login-btn:active {
   background-color: #93c5fd;
-}
-.login-code-btn:active {
-  background-color: #93c5fd;
-}
-.login-switch:active {
-  background-color: #1a3a5e;
-}
-.login-field:active {
-  background-color: #1a4a7e;
 }
 
 .login-btn-text {
@@ -110,12 +111,21 @@
   font-weight: bold;
 }
 
+// 切换登录/注册模式（按钮之上）
 .login-switch {
-  height: 32px;
+  position: fixed;
+  bottom: 48px;
+  left: 0;
+  width: 100%;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 4px;
+  z-index: 100;
+}
+
+.login-switch:active {
+  background-color: #1a3a5e;
 }
 
 .login-switch-text {
@@ -123,26 +133,37 @@
   color: #3b82f6;
 }
 
-// 错误状态文本：直接放到屏幕最顶层 top:0，永远可见
-// 用户原则："直接把错误信息放到最顶层" - top:0 不会被任何按钮遮
+// 错误全屏遮罩：直接遮住整个屏幕（用户原则：直接全屏显示错误信息）
+// 不透明红色背景 + 白色大字 + 点击关闭，无法被任何 UI 元素遮挡
+// z-index 10000 永远最高
 .login-status {
   position: fixed;
-  top: 0;                  // 屏幕最顶层
+  top: 0;
   left: 0;
   right: 0;
-  height: 24px;
+  bottom: 0;
+  background-color: rgba(239, 68, 68, 0.97);
+  z-index: 10000;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #ef4444;        // 实色红（红底 + 白字符合对比色原则）
-  z-index: 1000;                     // 永远最高
+  padding: 0 24px;
 }
 
 .login-status-text {
-  font-size: 13px;
-  color: #ffffff;        // 白字（红底配白字）
+  font-size: 22px;
+  color: #ffffff;
   font-weight: bold;
   text-align: center;
-  lines: 1;
+  lines: 3;
   text-overflow: ellipsis;
+}
+
+.login-status-hint {
+  margin-top: 24px;
+  font-size: 13px;
+  color: #ffffff;
+  text-align: center;
+  opacity: 0.85;
 }

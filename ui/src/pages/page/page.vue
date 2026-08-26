@@ -181,16 +181,18 @@
       </div>
     </div>
 
-    <!-- 搜索/创建群 弹窗：popup-input 也改用 div 避免 v-model 不同步
-         键盘弹起时 popup 贴顶，padding-top=keyboardHeight+4 留出键盘高度避免被键盘盖住 -->
-    <div class="chat-popup" :class="keyboardHeight > 0 ? 'chat-popup-kb' : ''" v-if="popupVisible" :style="keyboardHeight > 0 ? { paddingTop: (keyboardHeight + 4) + 'px' } : {}">
+    <!-- 搜索/创建群 弹窗：改用原生 input + 系统输入法（用户要求：改用系统输入法）
+         系统输入法自动弹，省掉自绘 Keyboard 的所有复杂度 -->
+    <div class="chat-popup" v-if="popupVisible">
       <div class="popup-mask" @click="closePopup"></div>
       <div class="popup-box">
         <text class="popup-title">{{ popupTitle }}</text>
-        <div class="popup-input" @click="focusPopupInput">
-          <text class="popup-input-text" v-if="popupInput">{{ popupInput }}</text>
-          <text class="popup-input-placeholder" v-else>{{ popupPlaceholder }}</text>
-        </div>
+        <input
+          class="popup-input"
+          type="text"
+          :placeholder="popupPlaceholder"
+          v-model="popupInput"
+        />
         <div class="popup-btns">
           <div class="popup-cancel" @click="closePopup">
             <text class="popup-btn-text">取消</text>
@@ -202,14 +204,16 @@
       </div>
     </div>
 
-    <!-- 输入栏：div 替代原生 input，避免 v-model 与自绘键盘字符不同步的问题。
-         fixed bottom + z-index 150 让键盘弹起时仍可见，
-         :style bottom=keyboardHeight 让输入栏顶到键盘上方不被遮挡 -->
-    <div class="chat-input-bar" :style="{ bottom: keyboardHeight + 'px' }">
-      <div class="chat-input-field" @click="focusMessageInput">
-        <text class="chat-input-text" v-if="messageInput">{{ messageInput }}</text>
-        <text class="chat-input-placeholder" v-else>输入消息...</text>
-      </div>
+    <!-- 输入栏：native input + v-model，系统输入法自动弹。
+         之前用 div+text 模拟是为了绕开 native input 与自绘键盘不同步，
+         现在改用系统输入法，native input 直接接收 IME 输入，v-model 自动同步 -->
+    <div class="chat-input-bar">
+      <input
+        class="chat-input-field"
+        type="text"
+        placeholder="输入消息..."
+        v-model="messageInput"
+      />
       <div class="chat-send-btn" @click="sendMessage">
         <text class="chat-send-text">发送</text>
       </div>
@@ -233,18 +237,7 @@
       </div>
     </div>
 
-    <!-- 自绘键盘：聚焦消息输入框或弹窗输入框后从底部弹出 -->
-    <Keyboard
-      v-if="keyboardTarget"
-      class="chat-keyboard"
-      @input="onKeyboardInput"
-      @back="onKeyboardBack"
-      @enter="onKeyboardEnter"
-      @confirm="onKeyboardConfirm"
-      @height="onKeyboardHeight"
-    />
-
-    <!-- 置顶居中错误提示 banner：词典笔屏小，原生 toast 在底部看不见 -->
+    <!-- ErrorBanner：聊天页的错误提示（保留以兜底） -->
     <ErrorBanner ref="errorBanner" />
   </div>
 </template>

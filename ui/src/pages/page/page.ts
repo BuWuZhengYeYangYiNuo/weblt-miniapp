@@ -1,18 +1,16 @@
 import { defineComponent } from 'vue'
 import MessageItem from '../../components/MessageItem.vue'
-import Keyboard from '../../components/Keyboard.vue'
 import { api, showToast, setAuthFailedHandler } from '../../lib/api'
 import { getUser, setUser, clearAuth, initAuth } from '../../lib/store'
 
 export default defineComponent({
-  components: { MessageItem, Keyboard },
+  components: { MessageItem },
 
   data() {
     return {
       userInfo: getUser() || { id: '', uid: '', username: '', nickname: '', points: 0 },
       activeTab: 'public' as string,
       messageInput: '',
-      keyboardTarget: '' as 'message' | 'popup' | '',
 
       // 公共
       publicMessages: [] as any[],
@@ -44,8 +42,6 @@ export default defineComponent({
 
       // 轮询
       pollTimer: 0 as any,
-      // 当前键盘高度（Keyboard 组件 emit 'height' 更新），用于把 chat-input-bar 顶到键盘上方
-      keyboardHeight: 0,
       // 发送消息期间的单次锁，防止用户连点导致重复发送
       _sendLock: false,
     }
@@ -53,12 +49,9 @@ export default defineComponent({
 
   computed: {
     contentHeight(): number {
-      // 聊天内容区高度：屏高 - topbar - input-bar(32) - 公告(20) - 键盘高度
-      // 键盘弹起时内容区主动缩小，让 input-bar 上移到键盘上方时仍能显示消息
+      // 聊天内容区高度：屏高 - topbar - input-bar - 公告（系统 IME 由 native 控制，不影响布局）
       let h = 260 - 28 - 32
       if (this.announcement) h -= 20
-      // 键盘弹起时减 kbHeight，但保底 28 让消息区域始终可见
-      h = Math.max(28, h - this.keyboardHeight)
       return h
     },
     sidebarHeight(): number {
@@ -118,9 +111,6 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
-    this.keyboardTarget = ''
-    // 清掉键盘高度，否则切回聊天页时 input-bar 仍被顶起
-    this.keyboardHeight = 0
   },
 
   onUnload() {
@@ -128,8 +118,6 @@ export default defineComponent({
       this.$page.clearInterval(this.pollTimer)
       this.pollTimer = 0
     }
-    this.keyboardTarget = ''
-    this.keyboardHeight = 0
   },
 
   // 注册全局 401/403 回调：token 失效时强制跳登录页（避免用户卡在 chat 页看到旧数据）
@@ -159,69 +147,8 @@ export default defineComponent({
       }
     },
 
-    // 输入框聚焦：原生 input 不会自动弹系统输入法，弹出自绘键盘
-    focusMessageInput() {
-      // 优先关闭弹窗，避免 popup 与 message 输入键盘冲突
-      if (this.popupVisible) {
-        this.closePopup()
-      }
-      this.keyboardTarget = 'message'
-    },
-
-    focusPopupInput() {
-      this.keyboardTarget = 'popup'
-    },
-
-    closeKeyboard() {
-      this.keyboardTarget = ''
-      // 关闭键盘时同步把 input-bar 顶高度清零，否则 input-bar 仍被顶着
-      this.keyboardHeight = 0
-    },
-
-    // 键盘上屏一个字符/汉字：回填到对应目标
-    onKeyboardInput(ch: string) {
-      if (this.keyboardTarget === 'popup') {
-        this.popupInput += ch
-      } else if (this.keyboardTarget === 'message') {
-        this.messageInput += ch
-      }
-    },
-
-    // 键盘退格：删除对应目标最后一个字符
-    onKeyboardBack() {
-      if (this.keyboardTarget === 'popup') {
-        this.popupInput = this.popupInput.slice(0, -1)
-      } else if (this.keyboardTarget === 'message') {
-        this.messageInput = this.messageInput.slice(0, -1)
-      }
-    },
-
-    // 键盘回车：消息输入时直接发送消息，弹窗输入时确认弹窗
-    onKeyboardEnter() {
-      if (this.keyboardTarget === 'popup' && this.popupVisible) {
-        this.confirmPopup()
-      } else if (this.keyboardTarget === 'message') {
-        this.sendMessage()
-      }
-    },
-
-    // 键盘「确定」：收起自绘键盘
-    onKeyboardConfirm() {
-      this.keyboardTarget = ''
-      this.keyboardHeight = 0
-    },
-
-    // 键盘高度变化（来自 Keyboard 组件 emit 'height'）：用于把输入栏顶到键盘上方
-    onKeyboardHeight(h: number) {
-      // 兜底：负数 / NaN 视为 0，避免 input-bar marginBottom 出现负值
-      this.keyboardHeight = Math.max(0, h || 0)
-    },
-
+    // 切 tab：清空旧消息避免视觉混淆（系统输入法由 native 控制，不影响）
     switchTab(tab: string) {
-      // 切 tab 时关闭自绘键盘并清 keyboardHeight，避免键盘一直浮在屏上挡内容，
-      // 同时 input-bar marginBottom 残留导致 input-bar 被永久顶起
-      this.keyboardTarget = ''
-      this.keyboardHeight = 0
       this.activeTab = tab
     },
 
@@ -381,8 +308,6 @@ export default defineComponent({
       this.showJoin = false
       this.showCreate = true
       this.popupInput = ''
-      // 关闭 message 键盘，强制切换到 popup 模式
-      if (this.keyboardTarget === 'message') this.keyboardTarget = ''
     },
 
     showJoinGroup() {
@@ -390,7 +315,6 @@ export default defineComponent({
       this.showCreate = false
       this.showJoin = true
       this.popupInput = ''
-      if (this.keyboardTarget === 'message') this.keyboardTarget = ''
     },
 
     openSearch() {
@@ -398,7 +322,6 @@ export default defineComponent({
       this.showJoin = false
       this.showSearch = true
       this.popupInput = ''
-      if (this.keyboardTarget === 'message') this.keyboardTarget = ''
     },
 
     closePopup() {
@@ -406,9 +329,6 @@ export default defineComponent({
       this.showCreate = false
       this.showJoin = false
       this.popupInput = ''
-      // 关闭 popup 键盘，并清掉 input-bar 顶高度
-      this.keyboardTarget = ''
-      this.keyboardHeight = 0
     },
 
     async confirmPopup() {
@@ -439,9 +359,6 @@ export default defineComponent({
           this.searchResult = result
           this.showSearch = false
           this.popupInput = ''
-          // 切到搜索结果弹窗时关闭 popup 键盘（搜索结果弹窗没输入框）
-          this.keyboardTarget = ''
-          this.keyboardHeight = 0
         } catch (err: any) {
           showToast(err.message)
         }
@@ -450,9 +367,6 @@ export default defineComponent({
 
     closeSearchResult() {
       this.searchResult = null
-      // 搜索结果弹窗关闭时清掉残留的 popup 键盘状态
-      this.keyboardTarget = ''
-      this.keyboardHeight = 0
     },
 
     async addFriend() {
@@ -460,7 +374,6 @@ export default defineComponent({
       try {
         await api.sendFriendRequest(this.searchResult.id)
         showToast('好友申请已发送')
-        // 调 closeSearchResult 让键盘也清掉
         this.closeSearchResult()
       } catch (err: any) {
         showToast(err.message)

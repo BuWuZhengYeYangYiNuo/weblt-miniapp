@@ -6,11 +6,17 @@ import {
   onSystemInputResult,
   consumeKeyboardResultFromOptions,
   onEventLog,
+  pushEventLog,
   SysImeLogEntry,
 } from '../../lib/system-ime'
 
 // 兼容老 API（chat 页 import startSystemKeyboard from '../index/index'）
 export { startSystemKeyboard } from '../../lib/system-ime'
+
+// 调试工具：把 base-page 转发的 hook 调用记到全局 event log
+function pushEventLogForDebug(hook: string, options: any) {
+  pushEventLog(hook, options === null ? null : (options || {}))
+}
 
 export default defineComponent({
   data() {
@@ -45,11 +51,14 @@ export default defineComponent({
     onEventLog((log) => {
       this.imeEventLog = log.slice()
     })
+    // 把 options 也记到 event log（调试用：哪个 hook 接收了 IME 回传的 options）
+    try { pushEventLogForDebug('hook:onLoad', options) } catch {}
     consumeKeyboardResultFromOptions(options)
   },
 
   async onNewOptions(options?: any) {
     // navTo 重新启动此页时（比如关闭子 app 回到本 page），options 里可能有 IME 结果
+    try { pushEventLogForDebug('hook:onNewOptions', options) } catch {}
     consumeKeyboardResultFromOptions(options)
   },
 
@@ -71,12 +80,19 @@ export default defineComponent({
       this.imeEventLog = log.slice()
     })
 
+    // 把 options 也记到 event log（调试用：哪个 hook 接收了 IME 回传的 options）
+    try { pushEventLogForDebug('hook:onShow', options) } catch {}
+
     // navTo 返回时框架把结果放在 onShow options 里（渠道 A：onShow:options）
     consumeKeyboardResultFromOptions(options)
 
     if (getToken() && getUser()) {
       $falcon.navTo('page', {})
     }
+  },
+
+  onUnload() {
+    try { pushEventLogForDebug('hook:onUnload', null) } catch {}
   },
 
   onHide() {

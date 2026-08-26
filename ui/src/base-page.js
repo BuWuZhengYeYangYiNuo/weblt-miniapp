@@ -142,6 +142,12 @@ export class BasePage extends PageRes {
       }
     }
     this.on('app:toast', this._toastHandler)
+    // 转发 options 给 Vue 组件
+    try {
+      if (this.$root && typeof this.$root.onLoad === 'function') {
+        this.$root.onLoad(options)
+      }
+    } catch (e) { /* ignore */ }
   }
 
   /**

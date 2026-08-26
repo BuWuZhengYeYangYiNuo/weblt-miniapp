@@ -8,6 +8,9 @@ import {
   SystemImeResult,
 } from '../../lib/system-ime'
 
+// 兼容老 API（chat 页 import startSystemKeyboard from '../index/index'）
+export { startSystemKeyboard } from '../../lib/system-ime'
+
 export default defineComponent({
   data() {
     return {

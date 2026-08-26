@@ -32,6 +32,8 @@ type Falcon = {
             showToast(params: { message: string }): void;
             showLoading(params?: { message?: string }): void;
             hideLoading(): void;
+            showAlert(params: { title: string; content: string; confirmText?: string }): Promise<void>;
+            showConfirm(params: { title: string; content: string; confirmText?: string; cancelText?: string }): Promise<{ confirm: boolean }>;
         },
         // 扫码模块（保留编译，前端当前未使用）。
         ScanInput: {

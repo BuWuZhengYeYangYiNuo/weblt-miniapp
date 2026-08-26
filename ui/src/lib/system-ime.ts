@@ -102,3 +102,22 @@ export function clearActiveHandler() {
   _activeHandler = null
   _activeUuid = ''
 }
+
+// 兼容旧代码：原来 ScanInput 风格是 "每个字符 publish → 回调一段字符串"
+const _charStreamHandlers: ((ch: string) => void)[] = []
+
+/**
+ * 兼容老 API — 旧 chat 页 import { startSystemKeyboard } from '../index/index'
+ * 旧约定：每回调一次 onChar 收到一段字符（ScanInput.cpp publish 'scan_input' 字符串）
+ * 现在有道输入法是 "整段文本提交时回调"，所以这个函数把整段文本作"一批字符"塞入。
+ * 仅做编译兼容：实际 chat 页运行起来会得到整段文本而不是字符流，需要后续重写。
+ */
+export function startSystemKeyboard(onChar: (ch: string) => void): boolean {
+  _charStreamHandlers.push(onChar)
+  onSystemInputResult((r) => {
+    for (const h of _charStreamHandlers) {
+      try { h(r.text) } catch {}
+    }
+  })
+  return openSystemKeyboard() !== ''
+}

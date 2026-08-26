@@ -5,28 +5,25 @@
       <text class="login-subtitle">登录</text>
     </div>
 
-    <!-- 触发系统软键盘：
-         1. native input @focus 调用 ScanInput.showKeyboard() 弹起系统软键盘
-         2. 系统软键盘输入的字符通过 scan_input 事件追加到对应字段
-         3. v-model 仍然绑定（fallback 时 native input 直接输入字符） -->
+    <!--
+      登录表单：用户名/密码各自有"用系统输入法输入"按钮，点击会调起
+      有道输入法 app，回传的文本会进入对应字段。
+      native input 保留作为初始内容显示（@click 触发 IME）。
+    -->
     <div class="login-form">
-      <input
-        class="login-input"
-        type="text"
-        placeholder="输入用户名"
-        v-model="username"
-        return-key-type="next"
-        @focus="onInputFocus('username')"
-      />
+      <div class="login-row">
+        <text class="login-input-display">{{ username || '点击右侧按钮用系统输入法输入用户名' }}</text>
+        <div class="login-ime-btn" @click="openImeFor('username')">
+          <text class="login-ime-btn-text">输入法</text>
+        </div>
+      </div>
 
-      <input
-        class="login-input"
-        type="password"
-        placeholder="输入密码"
-        v-model="password"
-        return-key-type="done"
-        @focus="onInputFocus('password')"
-      />
+      <div class="login-row">
+        <text class="login-input-display">{{ password ? '*'.repeat(password.length) : '点击右侧按钮用系统输入法输入密码' }}</text>
+        <div class="login-ime-btn" @click="openImeFor('password')">
+          <text class="login-ime-btn-text">输入法</text>
+        </div>
+      </div>
     </div>
 
     <!-- 登录按钮 -->
@@ -34,7 +31,7 @@
       <text class="login-btn-text">登录</text>
     </div>
 
-    <!-- 兜底错误显示 -->
+    <!-- 错误全屏遮罩 -->
     <div
       v-if="statusText"
       class="login-status"
@@ -42,6 +39,32 @@
     >
       <text class="login-status-text">{{ statusText }}</text>
       <text class="login-status-hint">点击任意处关闭</text>
+    </div>
+
+    <!-- 系统输入法结果展示：全屏置顶 z-index 9999 ——
+         用户原则："全屏置顶显示从那个传回方法获取到的文本" -->
+    <div
+      v-if="imeResult"
+      class="ime-result-overlay"
+      @click="dismissImeResult"
+    >
+      <text class="ime-result-label">系统输入法返回（来自：{{ imeResult.source }}）</text>
+      <text class="ime-result-text">{{ imeResult.text }}</text>
+
+      <div class="ime-result-actions">
+        <div class="ime-result-btn" @click.stop="applyImeResult('username')">
+          <text class="ime-result-btn-text">填入用户名</text>
+        </div>
+        <div class="ime-result-btn" @click.stop="applyImeResult('password')">
+          <text class="ime-result-btn-text">填入密码</text>
+        </div>
+        <div class="ime-result-btn ime-result-btn-close" @click.stop="dismissImeResult">
+          <text class="ime-result-btn-text">关闭</text>
+        </div>
+      </div>
+
+      <text class="ime-result-raw">{{ imeResult.raw ? JSON.stringify(imeResult.raw) : '' }}</text>
+      <text class="ime-result-hint">点击背景关闭</text>
     </div>
   </div>
 </template>

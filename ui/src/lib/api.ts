@@ -30,7 +30,7 @@ async function request(path: string, options: { method?: string; data?: any } = 
       method: options.method || 'GET',
       headers,
       data: options.data,  // 传对象，原生 libcurl/网络层会自己 JSON.stringify
-      timeout: 10000,
+      timeout: 20000,  // 词典笔网络可能慢，20s 兜底
     })
   } catch (err: any) {
     // native net.request 抛错时通常是网络/DNS 失败（词典笔没网），带 message 让上层 toast 提示
@@ -54,8 +54,18 @@ async function request(path: string, options: { method?: string; data?: any } = 
     throw new Error('网络异常，请检查网络连接')
   }
   if (sc >= 400) {
-    const errMsg = (data && typeof data === 'object' && data.error) || `请求失败 (${sc})`
+    // 兼容多种服务端错误格式：
+    //   { error: "string" }
+    //   { error: { message: "string" } }
+    //   { message: "string" }
+    let errMsg = `请求失败 (${sc})`
+    if (data && typeof data === 'object') {
+      if (typeof data.error === 'string') errMsg = data.error
+      else if (data.error && typeof data.error.message === 'string') errMsg = data.error.message
+      else if (typeof data.message === 'string') errMsg = data.message
+    }
     // 401/403 token 失效：清本地凭证 + 回调跳登录页
+    // 注意：不在这里清 user，让 page.ts 的 onShow catch 统一处理避免双重 navTo
     if (sc === 401 || sc === 403) {
       try { setToken('') } catch {}
       if (_onAuthFailed) _onAuthFailed(new Error(errMsg))

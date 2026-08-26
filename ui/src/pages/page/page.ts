@@ -92,10 +92,16 @@ export default defineComponent({
       this.userInfo = me
       setUser(me)
       this.checkinPoints = me.points || 0
-    } catch {
-      // token 失效：清掉本地凭证再跳登录页，避免 index.onShow 看到残留 token 再次跳回来形成死循环
-      await clearAuth()
-      $falcon.navTo('index', {})
+    } catch (err: any) {
+      // 区分 401/403（api.ts 已 setToken('')+ 触发 _onAuthFailed 跳登录）vs 网络错误
+      // 网络错误（5xx/DNS/timeout）不应该清 auth 也不应该跳登录页 —— 只提示
+      const msg = (err && err.message) || '加载失败'
+      if (msg.indexOf('401') === 0 || msg.indexOf('403') === 0 || /token|登录|过期|失效/i.test(msg)) {
+        // api.ts 里的 _onAuthFailed handler 会负责 clearAuth + navTo，这里不重复
+        return
+      }
+      // 网络/服务错误：提示用户，不跳走
+      showToast(msg)
       return
     }
 

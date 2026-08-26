@@ -311,7 +311,7 @@
   z-index: 150;
 }
 
-// 自绘 Keyboard 触发的"输入区"：整行点击弹键盘
+// native input：cursor 可见 + v-model 同步
 .chat-input-field {
   flex: 1;
   height: 30px;
@@ -319,23 +319,13 @@
   color: #e0e0e0;
   background-color: #0f3460;
   border-radius: 4px;
+  border-width: 0;
   padding: 0 8px;
   margin-right: 4px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
 }
 
-.chat-input-field:active {
+.chat-input-field:focus {
   background-color: #1e5fa8;
-}
-
-.chat-input-text {
-  font-size: 14px;
-  color: #e0e0e0;
-  text-overflow: ellipsis;
-  lines: 1;
 }
 
 // 自绘键盘包装：fixed bottom 0 z-index 200（比 chat input bar 高，低于错误遮罩）
@@ -449,30 +439,20 @@
   margin-bottom: 8px;
 }
 
-// 弹窗输入区：整行点击弹自绘 Keyboard
+// 弹窗输入区：native input + v-model
 .popup-input {
   height: 28px;
   font-size: 14px;
   color: #e0e0e0;
   background-color: #0f3460;
   border-radius: 4px;
+  border-width: 0;
   padding: 0 8px;
   margin-bottom: 8px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
 }
 
-.popup-input:active {
+.popup-input:focus {
   background-color: #1e5fa8;
-}
-
-.popup-input-text {
-  font-size: 14px;
-  color: #e0e0e0;
-  text-overflow: ellipsis;
-  lines: 1;
 }
 
 .popup-info {

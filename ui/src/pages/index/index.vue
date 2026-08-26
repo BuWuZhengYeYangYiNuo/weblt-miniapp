@@ -31,6 +31,11 @@
       <text class="login-btn-text">登录</text>
     </div>
 
+    <!-- 调试按钮：固定在右上角，点开看 imeEventLog 哪些事件触发了 -->
+    <div class="debug-btn" @click="showDebug = !showDebug">
+      <text class="debug-btn-text">调试({{ imeEventLog.length }})</text>
+    </div>
+
     <!-- 错误全屏遮罩 -->
     <div
       v-if="statusText"
@@ -65,6 +70,29 @@
 
       <text class="ime-result-raw">{{ imeResult.raw ? JSON.stringify(imeResult.raw) : '' }}</text>
       <text class="ime-result-hint">点击背景关闭</text>
+    </div>
+
+    <!-- 调试面板：滚动列出所有 $falcon.on 触发的事件 -->
+    <div
+      v-if="showDebug"
+      class="debug-panel"
+      @click="showDebug = false"
+    >
+      <text class="debug-panel-title">事件流（最近 {{ imeEventLog.length }} 条）</text>
+      <scroller class="debug-panel-scroller" scroll-y show-scrollbar>
+        <div
+          v-for="(e, i) in imeEventLog"
+          :key="i"
+          class="debug-panel-row"
+        >
+          <text class="debug-panel-event">{{ e.event }}</text>
+          <text class="debug-panel-data">{{ e.data ? JSON.stringify(e.data) : '' }}</text>
+        </div>
+        <div v-if="imeEventLog.length === 0" class="debug-panel-empty">
+          <text class="debug-panel-empty-text">还没有事件触发。点上面的"输入法"按钮试试。</text>
+        </div>
+      </scroller>
+      <text class="debug-panel-hint">点击任意处关闭</text>
     </div>
   </div>
 </template>

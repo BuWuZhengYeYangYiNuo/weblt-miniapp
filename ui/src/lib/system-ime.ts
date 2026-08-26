@@ -45,6 +45,9 @@ export function onSystemInputResult(cb: (r: SystemImeResult) => void) {
   for (const ev of eventNames) {
     try {
       $falcon.on(ev, (data: any) => {
+        // 每次触发都 push 到 event log（即使数据不包含文本也 push，方便排查）
+        try { pushEventLog(ev, data) } catch {}
+
         if (!_activeHandler) return
         // 把 data 抽取成纯文本
         let text = ''
@@ -68,19 +71,22 @@ export function onSystemInputResult(cb: (r: SystemImeResult) => void) {
 }
 
 /** 全局 debug buffer：记录所有 $falcon.on 触发过的事件（用于查回传渠道） */
-const _eventLog: Array<{ event: string; data: any; ts: number }> = []
+export interface SysImeLogEntry { event: string; data: any; ts: number }
+const _eventLog: SysImeLogEntry[] = []
 ;(globalThis as any).__sysImeEventLog = _eventLog
 
-const _eventLogHandlers: Array<(log: typeof _eventLog) => void> = []
-export function onEventLog(cb: (log: typeof _eventLog) => void) {
+const _eventLogHandlers: Array<(log: SysImeLogEntry[]) => void> = []
+export function onEventLog(cb: (log: SysImeLogEntry[]) => void) {
   _eventLogHandlers.push(cb)
 }
 function pushEventLog(event: string, data: any) {
-  _eventLog.push({ event, data, ts: Date.now() })
-  if (_eventLog.length > 200) _eventLog.shift()
+  const entry = { event, data, ts: Date.now() }
+  _eventLog.push(entry)
+  if (_eventLog.length > 50) _eventLog.shift()
   for (const h of _eventLogHandlers) try { h(_eventLog) } catch {}
 }
 export function getEventLog() { return _eventLog.slice() }
+export function clearEventLog() { _eventLog.length = 0 }
 
 /** 打开系统输入法（让用户输入），返回生成的 uuid */
 export function openSystemKeyboard(opts: {

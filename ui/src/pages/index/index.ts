@@ -5,7 +5,8 @@ import {
   openSystemKeyboard,
   onSystemInputResult,
   consumeKeyboardResultFromOptions,
-  SystemImeResult,
+  onEventLog,
+  SysImeLogEntry,
 } from '../../lib/system-ime'
 
 // 兼容老 API（chat 页 import startSystemKeyboard from '../index/index'）
@@ -19,9 +20,13 @@ export default defineComponent({
       statusText: '',
       loading: false,
       // IME 结果
-      imeResult: null as SystemImeResult | null,
+      imeResult: null as { text: string; source: string; raw?: any } | null,
+      // 实时事件流（$falcon.on 触发的所有事件都记在这里，便于排查回传渠道）
+      imeEventLog: [] as SysImeLogEntry[],
       // 当前激活的 IME 字段
       _activeImeField: '' as 'username' | 'password' | '',
+      // 调试面板开关
+      showDebug: false,
       // statusText 自动消失计时器
       _statusTimer: 0 as any,
     }
@@ -36,6 +41,9 @@ export default defineComponent({
     }
     onSystemInputResult((r) => {
       this.imeResult = r
+    })
+    onEventLog((log) => {
+      this.imeEventLog = log.slice()
     })
     consumeKeyboardResultFromOptions(options)
   },
@@ -58,6 +66,9 @@ export default defineComponent({
     onSystemInputResult((r) => {
       // 全屏置顶展示收到的文本
       this.imeResult = r
+    })
+    onEventLog((log) => {
+      this.imeEventLog = log.slice()
     })
 
     // navTo 返回时框架把结果放在 onShow options 里（渠道 A：onShow:options）

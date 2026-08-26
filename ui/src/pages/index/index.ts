@@ -9,7 +9,7 @@ export default defineComponent({
       password: '',
       statusText: '',
       loading: false,
-      // statusText 自动消失计时器（错误全屏遮罩，3s 后自动关闭）
+      // statusText 自动消失计时器（兜底遮罩，3s 后自动关闭）
       _statusTimer: 0 as any,
     }
   },
@@ -19,18 +19,16 @@ export default defineComponent({
     try {
       await initAuth()
     } catch {
-      // 初始化失败不致命，清空本地状态继续等用户输入
       this.username = ''
       this.password = ''
     }
-    // 仅当本地已有 token 和 user 时才自动跳到聊天页
     if (getToken() && getUser()) {
       $falcon.navTo('page', {})
     }
   },
 
   methods: {
-    // 设置 statusText 错误提示，3s 后自动消失
+    // 设置 statusText 错误提示，3s 后自动消失（兜底显示）
     setStatus(text: string) {
       this.statusText = text
       if (this._statusTimer) {
@@ -43,10 +41,27 @@ export default defineComponent({
       }, 3000)
     },
 
+    // 用 falcon 系统级弹窗显示错误（用户要求：原生窗口）
+    // 系统弹窗 100% 可见，不会被任何 UI 元素覆盖
+    async showError(title: string, content: string) {
+      try {
+        if ($falcon?.jsapi?.ui?.showAlert) {
+          await ($falcon as any).jsapi.ui.showAlert({
+            title,
+            content,
+            confirmText: '确定',
+          })
+          return
+        }
+      } catch (e) { /* native 调用失败 → fallback 兜底 */ }
+      // fallback：页面内 statusText 兜底显示
+      this.setStatus(`${title}: ${content}`)
+    },
+
     async handleSubmit() {
       if (this.loading) return
       if (!this.username || !this.password) {
-        this.setStatus('请填写用户名和密码')
+        await this.showError('提示', '请填写用户名和密码')
         return
       }
 
@@ -57,13 +72,12 @@ export default defineComponent({
         const data = await api.login(this.username, this.password)
         await saveAuth(data.token, data.user)
         this.setStatus('登录成功')
-        // 成功后短暂显示成功提示再跳转
         setTimeout(() => {
           this.statusText = ''
           $falcon.navTo('page', {})
         }, 500)
       } catch (err: any) {
-        this.setStatus(err.message || '登录失败')
+        await this.showError('登录失败', err.message || '操作失败')
       } finally {
         this.loading = false
       }

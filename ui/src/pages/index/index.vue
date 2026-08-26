@@ -5,7 +5,7 @@
       <text class="login-subtitle">登录</text>
     </div>
 
-    <!-- 改用系统输入法：原生 <input> + v-model，focus 自动弹系统 IME -->
+    <!-- 原生 input + v-model：focus 自动弹系统输入法（用户要求：原生输入框） -->
     <div class="login-form">
       <input
         class="login-input"
@@ -29,7 +29,7 @@
       <text class="login-btn-text">登录</text>
     </div>
 
-    <!-- 错误全屏遮罩 -->
+    <!-- 兜底 statusText（如果原生 showAlert 不可用时显示） -->
     <div
       v-if="statusText"
       class="login-status"

@@ -18,7 +18,7 @@ export default defineComponent({
       password: '',
       statusText: '',
       loading: false,
-      // 调试：已注册系统输入法结果
+      // IME 结果
       imeResult: null as SystemImeResult | null,
       // 当前激活的 IME 字段
       _activeImeField: '' as 'username' | 'password' | '',
@@ -27,6 +27,25 @@ export default defineComponent({
     }
   },
 
+  async onLoad(options?: any) {
+    try {
+      await initAuth()
+    } catch {
+      this.username = ''
+      this.password = ''
+    }
+    onSystemInputResult((r) => {
+      this.imeResult = r
+    })
+    consumeKeyboardResultFromOptions(options)
+  },
+
+  async onNewOptions(options?: any) {
+    // navTo 重新启动此页时（比如关闭子 app 回到本 page），options 里可能有 IME 结果
+    consumeKeyboardResultFromOptions(options)
+  },
+
+  // onShow 现在由 base-page.js 转发，签名 (options?: any) 以接收框架传回的 options
   async onShow(options?: any) {
     try {
       await initAuth()

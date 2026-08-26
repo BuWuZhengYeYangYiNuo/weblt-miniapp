@@ -152,17 +152,29 @@ export class BasePage extends PageRes {
   onNewOptions(options) {
     super.onNewOptions(options)
     this.options = options
+    // 把 options 推给 Vue 组件
+    try {
+      if (this.$root && typeof this.$root.onNewOptions === 'function') {
+        this.$root.onNewOptions(options)
+      }
+    } catch (e) { /* ignore */ }
   }
 
   /**
    * 页面生命周期:页面进入前台
+   * 框架返回栈底（关闭子 app）时也会调 onShow；此时 this.options 应该是新参数
    */
   onShow() {
     super.onShow()
 
-    //onshow以后组件才创建,可以调用组件的方法
-    if (this.$root.onShow) {
-      this.$root.onShow()
+    // 把最新的 this.options 推给 Vue 组件（onLoad 时已经设，navTo 返回时会刷新）
+    try {
+      if (this.$root && typeof this.$root.onShow === 'function') {
+        this.$root.onShow(this.options || {})
+      }
+    } catch (e) {
+      // 旧版 vue 组件没接 options 参数，调用 onShow() 不要崩
+      try { if (this.$root && this.$root.onShow) this.$root.onShow() } catch {}
     }
   }
 

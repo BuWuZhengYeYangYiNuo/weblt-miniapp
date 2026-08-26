@@ -27,11 +27,19 @@ export function onSystemInputResult(cb: (r: SystemImeResult) => void) {
     'edit_done',
     'editFinished',
     'editConfirmed',
+    'editClosed',
     'inputResult',
     'keyboardResult',
     'onResult',
     'commitText',
-    'scan_input',         // 兜底：跟 ScanInput.cpp 同源（如果它写的也是 history.db）
+    'scan_input',
+    // 来自有道输入法逆向上下文的新发现：
+    'topAppChanged',                  // 顶层 app 改变
+    'topPanelShowingStatusChanged',   // top panel 状态变化（这是有道输入法 amModule 触发的事件）
+    'app:input_done',                 // app 前缀的全局事件
+    'input:done',                     // input:done 命名空间
+    'app:focus_changed',              // app 焦点变化
+    'softKeyboardDone',               // 软键盘完成
   ]
 
   for (const ev of eventNames) {
@@ -45,6 +53,8 @@ export function onSystemInputResult(cb: (r: SystemImeResult) => void) {
         else if (data && typeof data.resultText === 'string') text = data.resultText
         else if (data && typeof data.contents === 'string') text = data.contents
         else if (data && typeof data.word === 'string') text = data.word
+        else if (data && typeof data.commitText === 'string') text = data.commitText
+        else if (data && typeof data.value === 'string') text = data.value
         else if (data) text = JSON.stringify(data)
 
         if (text) {
@@ -56,6 +66,21 @@ export function onSystemInputResult(cb: (r: SystemImeResult) => void) {
     }
   }
 }
+
+/** 全局 debug buffer：记录所有 $falcon.on 触发过的事件（用于查回传渠道） */
+const _eventLog: Array<{ event: string; data: any; ts: number }> = []
+;(globalThis as any).__sysImeEventLog = _eventLog
+
+const _eventLogHandlers: Array<(log: typeof _eventLog) => void> = []
+export function onEventLog(cb: (log: typeof _eventLog) => void) {
+  _eventLogHandlers.push(cb)
+}
+function pushEventLog(event: string, data: any) {
+  _eventLog.push({ event, data, ts: Date.now() })
+  if (_eventLog.length > 200) _eventLog.shift()
+  for (const h of _eventLogHandlers) try { h(_eventLog) } catch {}
+}
+export function getEventLog() { return _eventLog.slice() }
 
 /** 打开系统输入法（让用户输入），返回生成的 uuid */
 export function openSystemKeyboard(opts: {

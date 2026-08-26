@@ -1,4 +1,4 @@
-// 登录页用 absolute 布局：避开 flex column 容器里 native scroller 高度不可控问题
+// 登录页用 absolute 布局
 .login-page {
   position: relative;
   width: 100%;
@@ -33,20 +33,22 @@
 }
 
 // 登录表单：顶部 header 之下、底部按钮之上
+// 只剩用户名+密码两个 input，bottom 留 60px 给登录按钮
 .login-form {
   position: absolute;
-  top: 40px;
+  top: 60px;
   left: 0;
   right: 0;
-  bottom: 84px;          // 留出登录按钮 + 切换模式行
-  padding: 12px 40px 0;
+  bottom: 60px;
+  padding: 0 40px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
-// native input：让系统输入法正常工作（focus 自动弹 IME）
+// native input：focus 自动弹系统 IME
 .login-input {
-  height: 32px;
+  height: 36px;
   font-size: 14px;
   color: #ffffff;
   background-color: #0f3460;
@@ -56,43 +58,13 @@
   margin-top: 8px;
 }
 
-.login-input-code {
-  flex: 1;
-  margin-right: 4px;
-}
-
-.login-code-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.login-code-btn {
-  width: 56px;
-  height: 28px;
-  background-color: #3b82f6;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.login-code-btn:active {
-  background-color: #93c5fd;
-}
-
-.login-code-text {
-  font-size: 12px;
-  color: #ffffff;
-}
-
 // 登录按钮：fixed bottom 8px 永远可见
 .login-btn {
   position: fixed;
   bottom: 8px;
   left: 0;
   width: 100%;
-  height: 36px;
+  height: 40px;
   background-color: #3b82f6;
   border-radius: 4px;
   display: flex;
@@ -106,36 +78,12 @@
 }
 
 .login-btn-text {
-  font-size: 16px;
+  font-size: 18px;
   color: #ffffff;
   font-weight: bold;
 }
 
-// 切换登录/注册模式（按钮之上）
-.login-switch {
-  position: fixed;
-  bottom: 48px;
-  left: 0;
-  width: 100%;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.login-switch:active {
-  background-color: #1a3a5e;
-}
-
-.login-switch-text {
-  font-size: 13px;
-  color: #3b82f6;
-}
-
 // 错误全屏遮罩：直接遮住整个屏幕（用户原则：直接全屏显示错误信息）
-// 不透明红色背景 + 白色大字 + 点击关闭，无法被任何 UI 元素遮挡
-// z-index 10000 永远最高
 .login-status {
   position: fixed;
   top: 0;

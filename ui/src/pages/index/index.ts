@@ -5,12 +5,8 @@ import { saveAuth, initAuth, getUser } from '../../lib/store'
 export default defineComponent({
   data() {
     return {
-      isRegister: false,
       username: '',
       password: '',
-      email: '',
-      code: '',
-      codeSent: false,
       statusText: '',
       loading: false,
       // statusText 自动消失计时器（错误全屏遮罩，3s 后自动关闭）
@@ -47,29 +43,6 @@ export default defineComponent({
       }, 3000)
     },
 
-    toggleMode() {
-      this.isRegister = !this.isRegister
-      this.statusText = ''
-      this.code = ''
-      this.codeSent = false
-    },
-
-    async sendCode() {
-      if (this.loading) return  // 防重复点击
-      if (!this.email) { this.setStatus('请先输入邮箱'); return }
-      if (this.codeSent) return
-      this.loading = true
-      try {
-        await api.sendCode(this.email)
-        this.codeSent = true
-        this.setStatus('验证码已发送')
-      } catch (err: any) {
-        this.setStatus(err.message || '发送失败')
-      } finally {
-        this.loading = false
-      }
-    },
-
     async handleSubmit() {
       if (this.loading) return
       if (!this.username || !this.password) {
@@ -77,31 +50,20 @@ export default defineComponent({
         return
       }
 
-      if (this.isRegister && (!this.email || !this.code)) {
-        this.setStatus('请填写所有字段')
-        return
-      }
-
       this.loading = true
-      this.setStatus(this.isRegister ? '注册中...' : '登录中...')
+      this.setStatus('登录中...')
 
       try {
-        if (this.isRegister) {
-          const data = await api.register(this.username, this.password, this.email, this.code)
-          await saveAuth(data.token, data.user)
-          this.setStatus('注册成功')
-        } else {
-          const data = await api.login(this.username, this.password)
-          await saveAuth(data.token, data.user)
-          this.setStatus('登录成功')
-        }
+        const data = await api.login(this.username, this.password)
+        await saveAuth(data.token, data.user)
+        this.setStatus('登录成功')
         // 成功后短暂显示成功提示再跳转
         setTimeout(() => {
           this.statusText = ''
           $falcon.navTo('page', {})
         }, 500)
       } catch (err: any) {
-        this.setStatus(err.message || '操作失败')
+        this.setStatus(err.message || '登录失败')
       } finally {
         this.loading = false
       }

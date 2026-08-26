@@ -79,7 +79,7 @@ const _eventLogHandlers: Array<(log: SysImeLogEntry[]) => void> = []
 export function onEventLog(cb: (log: SysImeLogEntry[]) => void) {
   _eventLogHandlers.push(cb)
 }
-function pushEventLog(event: string, data: any) {
+export function pushEventLog(event: string, data: any) {
   const entry = { event, data, ts: Date.now() }
   _eventLog.push(entry)
   if (_eventLog.length > 50) _eventLog.shift()
